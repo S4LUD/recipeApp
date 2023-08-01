@@ -55,7 +55,7 @@ export default function TabLayout() {
           <Pressable
             onPress={() =>
               router.push({
-                pathname: "/(main)/screens/create_recipe",
+                pathname: "/create_recipe",
                 params: {},
               })
             }
@@ -63,7 +63,7 @@ export default function TabLayout() {
             <Ionicons name="ios-add-outline" size={26} />
           </Pressable>
           <Pressable
-            onPress={() => router.push({ pathname: "/(main)/screens/settings", params: {} })}
+            onPress={() => router.push({ pathname: "/settings", params: {} })}
           >
             <Ionicons name="ios-settings-outline" size={24} />
           </Pressable>

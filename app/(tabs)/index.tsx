@@ -70,7 +70,10 @@ const Index = ({}) => {
         <View style={styles.searchContainer}>
           <Pressable
             onPress={() =>
-              router.push({ pathname: "/(main)/screens/search_filter_categories", params: {} })
+              router.push({
+                pathname: "/search_filter_categories",
+                params: {},
+              })
             }
             style={[
               styles.leftContent,

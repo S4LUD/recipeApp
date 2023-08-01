@@ -1,5 +1,5 @@
 import Colors from "@/constants/Colors";
-import React, { useEffect, useState } from "react";
+import React, { memo, useState } from "react";
 import {
   View,
   Text,
@@ -180,4 +180,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DynamicMethodsInputs;
+export default memo(DynamicMethodsInputs);

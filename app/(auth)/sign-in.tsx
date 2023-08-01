@@ -11,9 +11,12 @@ import { TextInput } from "react-native-paper";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/context/auth";
 import { router } from "expo-router";
+import { useState } from "react";
 
 export default function Signin() {
   const colorScheme = useColorScheme();
+  const [username, setUsername] = useState<string | null>(null);
+  const [password, setPassword] = useState<string | null>(null);
   const { signIn } = useAuth();
 
   return (
@@ -44,6 +47,7 @@ export default function Signin() {
           outlineColor="transparent"
           activeOutlineColor={Colors[colorScheme ?? "light"].tint}
           label="Username"
+          onChangeText={(text) => setUsername(text)}
         />
         <TextInput
           style={{
@@ -56,6 +60,7 @@ export default function Signin() {
           activeOutlineColor={Colors[colorScheme ?? "light"].tint}
           label="Password"
           secureTextEntry={true}
+          onChangeText={(text) => setPassword(text)}
         />
         <Pressable
           style={{
@@ -65,7 +70,7 @@ export default function Signin() {
             paddingVertical: 15,
             borderRadius: 5,
           }}
-          onPress={() => signIn()}
+          onPress={() => signIn(username, password)}
         >
           <Text
             style={{

@@ -6,7 +6,6 @@ import {
   ScrollView,
   Image,
   Pressable,
-  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { RecommendFood } from "@/util/tempData";
@@ -37,7 +36,7 @@ const RecommendView = () => {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(main)/screens/search_filter_categories",
+                  pathname: "/search_filter_categories",
                   params: { filterBy: item },
                 })
               }
@@ -79,7 +78,7 @@ const RecommendView = () => {
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "/(main)/screens/view_recipe",
+                  pathname: "/view_recipe",
                   params: {
                     id: id,
                     title: title,

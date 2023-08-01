@@ -33,7 +33,7 @@ export default function Recipe() {
           <Pressable
             onPress={() =>
               router.push({
-                pathname: "/(main)/screens/create_recipe",
+                pathname: "/create_recipe",
                 params: {},
               })
             }

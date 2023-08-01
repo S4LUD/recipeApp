@@ -56,7 +56,7 @@ const RecentRecipe = () => {
                 <Pressable
                   onPress={() => {
                     router.push({
-                      pathname: "/(main)/screens/view_recipe",
+                      pathname: "/view_recipe",
                       params: {
                         id: id,
                         title: title,

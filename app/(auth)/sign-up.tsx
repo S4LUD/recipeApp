@@ -9,10 +9,21 @@ import {
 } from "react-native";
 import { TextInput } from "react-native-paper";
 import Colors from "@/constants/Colors";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
+import { useEffect } from "react";
 
 export default function Signout() {
   const colorScheme = useColorScheme();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.addListener("beforeRemove", (e) => {
+      e.preventDefault();
+      if (e.data.action.type === "GO_BACK") return;
+      navigation.dispatch(e.data.action);
+    });
+  }, [navigation]);
+
   return (
     <ScrollView
       contentContainerStyle={{

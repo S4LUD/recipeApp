@@ -11,6 +11,7 @@ import {
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { TextInput } from "react-native-paper";
+import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
 
 const Settings = () => {

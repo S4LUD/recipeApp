@@ -27,10 +27,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="dashboard"
         options={{
           headerShown: false,
-          title: "Home",
+          title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
             <TabBarIcon name="ios-home-sharp" size={size} color={color} />
           ),

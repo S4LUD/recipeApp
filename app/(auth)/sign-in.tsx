@@ -10,14 +10,23 @@ import {
 import { TextInput } from "react-native-paper";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/context/auth";
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useNavigation } from "expo-router";
+import { useEffect, useState } from "react";
 
 export default function Signin() {
   const colorScheme = useColorScheme();
   const [username, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
   const { signIn } = useAuth();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.addListener("beforeRemove", (e) => {
+      e.preventDefault();
+      if (e.data.action.type === "GO_BACK") return;
+      navigation.dispatch(e.data.action);
+    });
+  }, [navigation]);
 
   return (
     <ScrollView
@@ -31,8 +40,9 @@ export default function Signin() {
       <View
         style={{
           flex: 1,
+          backgroundColor: "#FFFFFF",
           alignItems: "center",
-          paddingTop: StatusBar.currentHeight,
+          paddingTop: 25,
           gap: 15,
         }}
       >

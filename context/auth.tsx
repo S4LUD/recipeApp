@@ -1,20 +1,16 @@
-import { router } from "expo-router";
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useReducer,
-  useState,
-  useMemo,
-} from "react";
+import { router, useSegments, useRootNavigation } from "expo-router";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import { Reducer, initialState, State } from "./reducer";
-import { ACTION_TYPES } from "./action";
 
-let API_URL = "http://192.168.1.72:3000";
+interface User {
+  _id: string;
+  username: string;
+  bio?: string;
+  image?: string;
+}
 
-interface AuthContextType {
+interface AuthContextValue {
   signIn: (username: string | null, password: string | null) => void;
   signUp: (
     username: string,
@@ -23,12 +19,13 @@ interface AuthContextType {
     image: string
   ) => void;
   signOut: () => void;
-  state: State;
+  authInitialized: boolean;
+  user: User | null;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function useAuth(): AuthContextType {
+export function useAuth(): AuthContextValue {
   const authContext = useContext(AuthContext);
   if (!authContext) {
     throw new Error("useAuth must be used within an AuthProvider.");
@@ -42,68 +39,75 @@ export function AuthProvider({
   children: React.ReactNode;
 }): JSX.Element {
   // This hook can be used to access the user info.
-  const [state, setDispatch] = useReducer(Reducer, initialState);
+  const [user, setAuth] = useState<User | null>(null);
+  const [authInitialized, setAuthInitialized] = useState<boolean>(false);
 
-  async function save(key: string, value: string) {
-    await SecureStore.setItemAsync(key, value);
-  }
+  useEffect(() => {
+    (async () => {
+      const storedToken = await SecureStore.getItemAsync("token");
+      if (storedToken) {
+        await axios
+          .request({
+            method: "post",
+            maxBodyLength: Infinity,
+            url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/verify`,
+            headers: {
+              authorization_r: `Bearer ${storedToken}`,
+            },
+          })
+          .then((response) => {
+            if (response.data) {
+              setAuth(response.data);
+            }
+          })
+          .catch((error) => {
+            if (error.response) {
+              console.log("Error response data:", error.response.data);
+              console.log("Error response status:", error.response.status);
+              console.log("Error response headers:", error.response.headers);
+            } else {
+              console.log("Error:", error.message);
+            }
+          });
+      }
+      setAuthInitialized(true);
+    })();
+  }, []);
 
   // This hook will protect the route access based on user authentication.
   async function useProtectedRoute(): Promise<void> {
-    const [token, setToken] = useState<string | null>(null);
+    const segments = useSegments();
+    const [isNavigationReady, setNavigationReady] = useState(false);
+    const rooNavigation = useRootNavigation();
 
     useEffect(() => {
-      const fetchToken = async () => {
-        try {
-          const storedToken = await SecureStore.getItemAsync("token");
-          setToken(storedToken);
-        } catch (error) {
-          console.error("Error retrieving token:", error);
+      const unsubscribe = rooNavigation?.addListener("state", () => {
+        setNavigationReady(true);
+      });
+      return function cleanup() {
+        if (unsubscribe) {
+          unsubscribe();
         }
       };
-
-      fetchToken();
-    }, []);
+    }, [rooNavigation]);
 
     useEffect(() => {
-      const Authenticate = async () => {
-        if (token) {
-          await axios
-            .request({
-              method: "post",
-              maxBodyLength: Infinity,
-              url: `${API_URL}/api/user/verify`,
-              headers: {
-                authorization_r: `Bearer ${token}`,
-              },
-            })
-            .then((response) => {
-              if (!response.data.status) {
-                setDispatch({ type: ACTION_TYPES.signOut });
-                router.replace("/sign-in");
-              } else if (response.data.status) {
-                console.log(response.data.status);
-                setDispatch({ type: ACTION_TYPES.signIn });
-                router.replace("/(tabs)");
-              }
-            })
-            .catch((error) => {
-              if (error.response) {
-                console.log("Error response data:", error.response.data);
-                console.log("Error response status:", error.response.status);
-                console.log("Error response headers:", error.response.headers);
-              } else {
-                console.log("Error:", error.message);
-              }
-            });
-        } else {
-          setDispatch({ type: ACTION_TYPES.signOut });
-          router.replace("/sign-in");
-        }
-      };
+      if (!isNavigationReady) return;
 
-      Authenticate();
-    }, [token]);
+      const inAuthGroup = segments[0] === "(auth)";
+
+      if (!authInitialized) return;
+
+      if (!user && !inAuthGroup) {
+        router.replace("/sign-in");
+      } else if (user && inAuthGroup) {
+        router.replace("/(tabs)/dashboard");
+      }
+    }, [user, segments, authInitialized, isNavigationReady]);
+  }
+
+  async function save(key: string, value: string) {
+    await SecureStore.setItemAsync(key, value);
   }
 
   async function useSignIn(username: string | null, password: string | null) {
@@ -111,7 +115,7 @@ export function AuthProvider({
       const response = await axios.request({
         method: "post",
         maxBodyLength: Infinity,
-        url: `${API_URL}/api/user/login`,
+        url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/login`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -121,51 +125,37 @@ export function AuthProvider({
         }),
       });
 
-      if (response.data.status) {
-        setDispatch({ type: ACTION_TYPES.signIn });
-        await save("token", response.headers.token);
-        router.replace("/(tabs)");
-      } else {
-        setDispatch({ type: ACTION_TYPES.signOut });
-        router.replace("/sign-in");
-      }
+      setAuth(response.data);
+      await save("token", response.headers.token);
     } catch (error) {
       console.log(error);
       // Handle API error, show error to the user, etc.
     }
   }
 
-  function signUp(
-    username: string,
-    password: string,
-    bio: string,
-    image: string
-  ) {}
+  async function useSignOut() {
+    try {
+      setAuth(null);
+      await SecureStore.deleteItemAsync("token");
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-  const ActionType = useMemo(
-    () => ({
-      signIn: async (username: string | null, password: string | null) => {
-        await useSignIn(username, password);
-      },
-      signOut: async () => {
-        setDispatch({ type: ACTION_TYPES.signOut });
-        console.log("signOut");
-        await SecureStore.deleteItemAsync("token");
-        router.replace("/sign-in");
-      },
-    }),
-    []
-  );
+  function signUp(username: string, password: string) {
+    console.log(username, password);
+  }
 
   useProtectedRoute();
 
   return (
     <AuthContext.Provider
       value={{
-        signIn: (username, password) => ActionType.signIn(username, password),
-        signUp,
-        signOut: async () => ActionType.signOut(),
-        state,
+        signIn: (username, password) => useSignIn(username, password),
+        signUp: (username, password) => signUp(username, password),
+        signOut: async () => useSignOut(),
+        authInitialized,
+        user,
       }}
     >
       {children}

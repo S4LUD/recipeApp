@@ -66,8 +66,7 @@ interface AuthContextValue {
     username: string | null,
     password: string | null,
     firstName: string | null,
-    lastName: string | null,
-    confirmPassword: string | null
+    lastName: string | null
   ) => Promise<{ status: boolean; message: string } | null>;
   signOut: () => void;
   authInitialized: boolean;
@@ -254,7 +253,7 @@ export function AuthProvider({
       );
 
       // If verification succeeds, get the user profile
-      if (response.data) {
+      if (response.data.status) {
         const userProfile = await getUserProfile(response.headers.token);
 
         const {
@@ -279,12 +278,11 @@ export function AuthProvider({
         });
 
         await save("token", response.headers.token);
-
         setLoginStatus(false);
         return { status: true, message: "Sign-in successful" };
       } else {
         setLoginStatus(false);
-        return { status: false, message: "Authentication failed" };
+        return { status: false, message: response.data.message };
       }
     } catch (error) {
       setLoginStatus(false);
@@ -314,14 +312,10 @@ export function AuthProvider({
     username: string | null,
     password: string | null,
     firstName: string | null,
-    lastName: string | null,
-    confirmPassword: string | null
+    lastName: string | null
   ): Promise<{ status: boolean; message: string } | null> {
     if (!username || !password || !firstName || !lastName)
       return { status: false, message: "Please don't leave the field empty" };
-
-    if (password !== confirmPassword)
-      return { status: false, message: "Password do not match" };
 
     try {
       setSignUpStatus(true);
@@ -432,14 +426,14 @@ export function AuthProvider({
   async function useUpdateProfile(uri: string, type: string, name: string) {
     try {
       const storedToken = await SecureStore.getItemAsync("token");
-      if (!storedToken || (!user?.image_public_id && !user?.image)) {
+      if (!storedToken) {
         return;
       }
 
       setUploadProfileImageLoading(true);
 
       if (user?.image_public_id) {
-        await deleteProfileImage(user.image_public_id, storedToken);
+        await deleteProfileImage(user?.image_public_id, storedToken);
       }
 
       await uploadNewProfileImage(uri, type, name, storedToken);
@@ -706,13 +700,8 @@ export function AuthProvider({
     <AuthContext.Provider
       value={{
         signIn: (username, password) => useSignIn(username, password),
-        signUp: async (
-          username,
-          password,
-          firstName,
-          lastName,
-          confirmPassword
-        ) => signUp(username, password, firstName, lastName, confirmPassword),
+        signUp: async (username, password, firstName, lastName) =>
+          signUp(username, password, firstName, lastName),
         signOut: () => useSignOut(),
         authInitialized,
         user,

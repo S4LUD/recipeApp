@@ -226,7 +226,6 @@ const Settings = () => {
         <View
           style={{
             marginTop: 10,
-            backgroundColor: "#FFFFFF",
             paddingHorizontal: 15,
             paddingVertical: 15,
           }}

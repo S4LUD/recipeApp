@@ -26,6 +26,9 @@ export default function TabLayout() {
 
   const fullName: string = `${user?.firstName} ${user?.lastName}`;
 
+  const blurhash =
+    "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
+
   return (
     <>
       <View
@@ -38,12 +41,27 @@ export default function TabLayout() {
         ]}
       >
         <View style={styles.userContent}>
-          <Image
-            style={styles.userImage}
-            source={{
-              uri: user?.image ? user?.image : undefined,
-            }}
-          />
+          {user?.image ? (
+            <Image
+              style={styles.userImage}
+              source={{
+                uri: user?.image,
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#F0F2F5",
+                height: 45,
+                width: 45,
+                borderRadius: 100,
+              }}
+            >
+              <Ionicons name="person" size={26} color="gray" />
+            </View>
+          )}
           <View>
             <Text
               style={{

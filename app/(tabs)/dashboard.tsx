@@ -15,10 +15,14 @@ import RecentRecipe from "@/components/RecentRecipe";
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/context/auth";
 
 const Index = ({}) => {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { user } = useAuth();
+
+  const fullName: string = `${user?.firstName} ${user?.lastName}`;
 
   return (
     <View>
@@ -52,7 +56,7 @@ const Index = ({}) => {
                   },
                 ]}
               >
-                Hello, Priscilla Du Preez
+                Hello, {fullName}
               </Text>
               <Text
                 style={[

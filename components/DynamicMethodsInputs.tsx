@@ -6,15 +6,26 @@ import {
   StyleSheet,
   useColorScheme,
   Pressable,
+  Image,
 } from "react-native";
 import { TextInput } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import uuid from "react-native-uuid";
+import * as ImagePicker from "expo-image-picker";
+import mimeType from "react-native-mime-types";
+import path from "path";
+
+export interface ImageInterface {
+  uri: string;
+  type: string;
+  name: string;
+}
 
 export interface MethodsInputValue {
   id: string;
+  number: number;
   value: string;
-  placeholder: string;
+  images?: ImageInterface;
 }
 
 interface DynamicInputsProps {
@@ -30,22 +41,6 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
     useState<MethodsInputValue[]>(initialValues);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const colorScheme = useColorScheme();
-  const ingredientsList = [
-    "Heat oil in a cooking pot.",
-    "Once the oil gets hot, saute onion and garlic until onion softens.",
-    "Add pork Saute until brown.",
-    "Pour tomato sauce and water. Stir and let boil.",
-    "Add Knorr Pork Cube. Stir. Add dried bay leaves. Cover and cook in medium heat for 30 minutes. Note: Add more water if needed.",
-    "Add hotdogs. Cook for 10 minutes.",
-    "Add carrot and potato. Cover and cook for 8 minutes.",
-    "Add green peas. Cook for 3 to 5 minutes.",
-    "Season with salt and ground black pepper.",
-  ];
-
-  const getRandomIngredient = () => {
-    const randomIndex = Math.floor(Math.random() * ingredientsList.length);
-    return ingredientsList[randomIndex];
-  };
 
   const handleInputChange = (text: string, index: number) => {
     const newInputValues = [...inputValues];
@@ -55,20 +50,29 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
   };
 
   const handleAddInput = () => {
+    const nextMethodNumber = inputValues.length + 1;
+
     setInputValues([
       ...inputValues,
       {
         id: uuid.v4().toString(),
+        number: nextMethodNumber,
         value: "",
-        placeholder: getRandomIngredient(),
       },
     ]);
   };
 
   const handleRemoveInput = (index: number) => {
     const newInputValues = inputValues.filter((_, i) => i !== index);
-    setInputValues(newInputValues);
-    onDataChanged(newInputValues);
+
+    // Update method numbers of the remaining methods
+    const updatedInputValues = newInputValues.map((input, i) => ({
+      ...input,
+      number: i + 1,
+    }));
+
+    setInputValues(updatedInputValues);
+    onDataChanged(updatedInputValues);
   };
 
   const handleFocus = (index: number) => {
@@ -77,6 +81,33 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
 
   const handleBlur = () => {
     setFocusedIndex(-1);
+  };
+
+  const pickImage = async (id: string) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 1,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newMethodImages = inputValues.map((input) => {
+        if (input.id === id) {
+          return {
+            ...input,
+            images: {
+              uri: result.assets[0].uri,
+              type: mimeType.lookup(result.assets[0].uri) || "",
+              name: path.basename(result.assets[0].uri),
+            },
+          };
+        }
+        return input;
+      });
+      setInputValues(newMethodImages);
+      onDataChanged(newMethodImages);
+    }
   };
 
   return (
@@ -96,7 +127,7 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
               }}
               value={input.value}
               onChangeText={(text) => handleInputChange(text, index)}
-              placeholder={input.placeholder}
+              placeholder="Heat oil in a cooking pot."
               placeholderTextColor="#D8D8D8"
               textColor="black"
               mode="outlined"
@@ -117,33 +148,25 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
                 gap: 6,
               }}
             >
-              <Pressable
-                style={{
-                  padding: 25,
-                  backgroundColor: "#F0F2F5",
-                  borderRadius: 5,
-                }}
-              >
-                <Ionicons name="images-outline" size={30} color="#D8D8D8" />
-              </Pressable>
-              <Pressable
-                style={{
-                  padding: 25,
-                  backgroundColor: "#F0F2F5",
-                  borderRadius: 5,
-                }}
-              >
-                <Ionicons name="images-outline" size={30} color="#D8D8D8" />
-              </Pressable>
-              <Pressable
-                style={{
-                  padding: 25,
-                  backgroundColor: "#F0F2F5",
-                  borderRadius: 5,
-                }}
-              >
-                <Ionicons name="images-outline" size={30} color="#D8D8D8" />
-              </Pressable>
+              {input.images ? (
+                <Pressable key={index} onPress={() => pickImage(input.id)}>
+                  <Image
+                    source={{ uri: input.images.uri }}
+                    style={{ height: 85, width: 85, borderRadius: 5 }}
+                  />
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={() => pickImage(input.id)}
+                  style={{
+                    padding: 25,
+                    backgroundColor: "#F0F2F5",
+                    borderRadius: 5,
+                  }}
+                >
+                  <Ionicons name="images-outline" size={30} color="#D8D8D8" />
+                </Pressable>
+              )}
             </View>
           </View>
           <View style={{ paddingTop: 15 }}>

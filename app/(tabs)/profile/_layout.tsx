@@ -13,6 +13,7 @@ import Colors from "@/constants/Colors";
 import Recipe from "./recipe";
 import Favorite from "./favorite";
 import { router } from "expo-router";
+import { useAuth } from "@/context/auth";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -21,6 +22,9 @@ export default function TabLayout() {
   const statusBarHeight = StatusBar.currentHeight
     ? StatusBar.currentHeight
     : 33.318870544433594;
+  const { user } = useAuth();
+
+  const fullName: string = `${user?.firstName} ${user?.lastName}`;
 
   return (
     <>
@@ -37,17 +41,25 @@ export default function TabLayout() {
           <Image
             style={styles.userImage}
             source={{
-              uri: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=761&q=80",
+              uri: user?.image ? user?.image : undefined,
             }}
           />
-          <View style={{ gap: 5 }}>
+          <View>
             <Text
               style={{
                 fontSize: 16,
                 color: Colors[colorScheme ?? "light"].text,
               }}
             >
-              Priscilla Du Preez
+              {fullName}
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: Colors[colorScheme ?? "light"].text,
+              }}
+            >
+              @{user?.username}
             </Text>
           </View>
         </View>

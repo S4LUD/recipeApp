@@ -3,18 +3,25 @@ import {
   Text,
   ScrollView,
   useColorScheme,
-  Dimensions,
   Pressable,
   StatusBar,
 } from "react-native";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import Colors from "@/constants/Colors";
 import { router, useNavigation } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/auth";
 
 export default function Signout() {
   const colorScheme = useColorScheme();
   const navigation = useNavigation();
+  const { signUp, signUpStatus } = useAuth();
+  const [username, setUsername] = useState<string | null>(null);
+  const [password, setPassowrd] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassowrd] = useState<string | null>(null);
+  const [isError, setError] = useState<string | null>(null);
 
   useEffect(() => {
     navigation.addListener("beforeRemove", (e) => {
@@ -24,32 +31,86 @@ export default function Signout() {
     });
   }, [navigation]);
 
+  const _signUp = async () => {
+    const result = await signUp(
+      username,
+      password,
+      firstName,
+      lastName,
+      confirmPassword
+    );
+    if (result?.status === false) {
+      setError(result.message);
+    }
+  };
+
   return (
-    <ScrollView
-      contentContainerStyle={{
+    <View
+      style={{
         flex: 1,
         paddingTop: StatusBar.currentHeight,
         backgroundColor: "#FFFFFF",
+        paddingHorizontal: 15,
       }}
-      keyboardShouldPersistTaps="never"
     >
+      {signUpStatus && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <ActivityIndicator size={30} />
+        </View>
+      )}
       <View
         style={{
           flex: 1,
-          backgroundColor: "#FFFFFF",
-          alignItems: "center",
           paddingTop: 25,
           gap: 15,
         }}
       >
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "600" }}>SIGNOUT</Text>
+        <Text style={{ fontSize: 24, fontWeight: "600", alignSelf: "center" }}>
+          SIGNOUT
+        </Text>
+        <View style={{ flexDirection: "row", gap: 15 }}>
+          <TextInput
+            style={{
+              flex: 1,
+              backgroundColor: "#F0F2F5",
+            }}
+            onChangeText={(text) => setFirstName(text)}
+            textColor="black"
+            mode="flat"
+            outlineColor="transparent"
+            activeOutlineColor={Colors[colorScheme ?? "light"].tint}
+            label="First Name"
+          />
+          <TextInput
+            style={{
+              flex: 1,
+              backgroundColor: "#F0F2F5",
+            }}
+            onChangeText={(text) => setLastName(text)}
+            textColor="black"
+            mode="flat"
+            outlineColor="transparent"
+            activeOutlineColor={Colors[colorScheme ?? "light"].tint}
+            label="Last Name"
+          />
         </View>
         <TextInput
           style={{
             backgroundColor: "#F0F2F5",
-            width: Dimensions.get("screen").width - 25,
           }}
+          onChangeText={(text) => setUsername(text)}
           textColor="black"
           mode="flat"
           outlineColor="transparent"
@@ -59,8 +120,8 @@ export default function Signout() {
         <TextInput
           style={{
             backgroundColor: "#F0F2F5",
-            width: Dimensions.get("screen").width - 25,
           }}
+          onChangeText={(text) => setPassowrd(text)}
           textColor="black"
           mode="flat"
           outlineColor="transparent"
@@ -71,8 +132,8 @@ export default function Signout() {
         <TextInput
           style={{
             backgroundColor: "#F0F2F5",
-            width: Dimensions.get("screen").width - 25,
           }}
+          onChangeText={(text) => setConfirmPassowrd(text)}
           textColor="black"
           mode="flat"
           outlineColor="transparent"
@@ -80,15 +141,17 @@ export default function Signout() {
           label="Confirm password"
           secureTextEntry={true}
         />
+        {isError && (
+          <Text style={{ fontSize: 12, color: "#FA3636" }}>{isError}</Text>
+        )}
         <Pressable
           style={{
-            width: Dimensions.get("screen").width - 25,
             backgroundColor: Colors[colorScheme ?? "light"].tint,
             alignItems: "center",
             paddingVertical: 15,
             borderRadius: 5,
           }}
-          onPress={() => console.log("Pressed")}
+          onPress={() => _signUp()}
         >
           <Text
             style={{
@@ -102,7 +165,6 @@ export default function Signout() {
         <View
           style={{
             flexDirection: "row",
-            width: Dimensions.get("screen").width - 25,
             justifyContent: "center",
             gap: 10,
             alignItems: "center",
@@ -121,6 +183,6 @@ export default function Signout() {
           </Pressable>
         </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }

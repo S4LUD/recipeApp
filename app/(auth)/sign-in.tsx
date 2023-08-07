@@ -7,7 +7,7 @@ import {
   Pressable,
   StatusBar,
 } from "react-native";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/context/auth";
 import { router, useNavigation } from "expo-router";
@@ -17,8 +17,9 @@ export default function Signin() {
   const colorScheme = useColorScheme();
   const [username, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const { signIn, loginStatus } = useAuth();
   const navigation = useNavigation();
+  const [isError, setError] = useState<string | null>(null);
 
   useEffect(() => {
     navigation.addListener("beforeRemove", (e) => {
@@ -28,15 +29,40 @@ export default function Signin() {
     });
   }, [navigation]);
 
+  const _signIn = async (username: string | null, password: string | null) => {
+    const result = await signIn(username, password);
+    if (result?.status === false) {
+      setError(result.message);
+    }
+  };
+
   return (
     <ScrollView
       contentContainerStyle={{
         flex: 1,
         paddingTop: StatusBar.currentHeight,
         backgroundColor: "#FFFFFF",
+        position: "relative",
       }}
       keyboardShouldPersistTaps="never"
     >
+      {loginStatus && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <ActivityIndicator size={30} />
+        </View>
+      )}
       <View
         style={{
           flex: 1,
@@ -72,6 +98,18 @@ export default function Signin() {
           secureTextEntry={true}
           onChangeText={(text) => setPassword(text)}
         />
+        {isError && (
+          <Text
+            style={{
+              paddingLeft: 15,
+              fontSize: 12,
+              color: "#FA3636",
+              alignSelf: "flex-start",
+            }}
+          >
+            {isError}
+          </Text>
+        )}
         <Pressable
           style={{
             width: Dimensions.get("screen").width - 25,
@@ -80,7 +118,7 @@ export default function Signin() {
             paddingVertical: 15,
             borderRadius: 5,
           }}
-          onPress={() => signIn(username, password)}
+          onPress={() => _signIn(username, password)}
         >
           <Text
             style={{

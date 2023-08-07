@@ -1,6 +1,6 @@
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import React, { memo, useState } from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
   useColorScheme,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { useHeaderHeight } from "@react-navigation/elements";
 import DynamicIngredientsInputs, {
   IngredientsInputValue,
@@ -19,38 +20,39 @@ import DynamicIngredientsInputs, {
 import DynamicMethodsInputs, {
   MethodsInputValue,
 } from "@/components/DynamicMethodsInputs";
+import * as ImagePicker from "expo-image-picker";
+import { useAuth } from "@/context/auth";
+
+const LoadingIndicator = () => (
+  <View
+    style={{
+      position: "absolute",
+      zIndex: 1,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.1)",
+    }}
+  >
+    <ActivityIndicator animating={true} size={30} />
+  </View>
+);
 
 const Create = () => {
+  const { triggerCreateRecipes, createRecipeStatus } = useAuth();
   const colorScheme = useColorScheme();
   const headerHeight = useHeaderHeight();
   const [IngredientsData, setIngredientsData] = useState<
     IngredientsInputValue[]
-  >([
-    {
-      id: "54672e68-211f-422e-9b8b-95361c5d8f2b",
-      value: "",
-      placeholder: "Cilantro - A handful",
-    },
-    {
-      id: "b784cf7b-d885-4a3e-8e66-630a4d622cdd",
-      value: "",
-      placeholder: "Paprika - 1 tsp (5g)",
-    },
-  ]);
-  const [MethodsData, setMethodsData] = useState<MethodsInputValue[]>([
-    {
-      id: "54672e68-211f-422e-9b8b-95361c5d8f2b",
-      value: "",
-      placeholder: "Heat oil in a cooking pot.",
-    },
-    {
-      id: "b784cf7b-d885-4a3e-8e66-630a4d622cdd",
-      value: "",
-      placeholder:
-        "Once the oil gets hot, saute onion and garlic until onion softens.",
-    },
-  ]);
+  >([]);
+  const [MethodsData, setMethodsData] = useState<MethodsInputValue[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [image, setImage] = useState<string | null>("");
+  const [recipeTitle, setRecipeTitle] = useState<string | undefined>(undefined);
+  const [recipeInfo, setRecipeInfo] = useState<string | undefined>(undefined);
 
   const categories = [
     "Breakfast",
@@ -62,22 +64,54 @@ const Create = () => {
     "Dessert",
   ];
 
-  const handleCategoryPress = (category: string) => {
-    if (selectedCategories.includes(category)) {
-      // If the category is already selected, remove it from the selectedCategories array
-      setSelectedCategories((prevSelectedCategories) =>
-        prevSelectedCategories.filter((cat) => cat !== category)
-      );
-    } else {
-      // If the category is not selected, add it to the selectedCategories array
-      if (selectedCategories.length < 4) {
-        setSelectedCategories((prevSelectedCategories) => [
-          ...prevSelectedCategories,
-          category,
-        ]);
+  const handleCategoryPress = useCallback((category: string) => {
+    setSelectedCategories((prevSelectedCategories) =>
+      prevSelectedCategories.includes(category)
+        ? prevSelectedCategories.filter((cat) => cat !== category)
+        : prevSelectedCategories.length < 4
+        ? [...prevSelectedCategories, category]
+        : prevSelectedCategories
+    );
+  }, []);
+
+  const pickImage = useCallback(async () => {
+    try {
+      // No permissions request is necessary for launching the image library
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+      });
+
+      // Check if the result is not canceled and has valid assets
+      if (
+        !result.canceled &&
+        result.assets.length > 0 &&
+        result.assets[0].uri
+      ) {
+        setImage(result.assets[0].uri);
       }
+    } catch (error) {
+      console.error("Error picking image:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    triggerCreateRecipes(
+      image || "",
+      recipeTitle || "",
+      recipeInfo || "",
+      IngredientsData,
+      selectedCategories,
+      MethodsData
+    );
+  }, [
+    image,
+    recipeTitle,
+    recipeInfo,
+    IngredientsData,
+    selectedCategories,
+    MethodsData,
+  ]);
 
   return (
     <KeyboardAvoidingView
@@ -85,6 +119,7 @@ const Create = () => {
       keyboardVerticalOffset={headerHeight}
       enabled={true}
     >
+      {createRecipeStatus && <LoadingIndicator />}
       <ScrollView
         style={{
           backgroundColor: Colors[colorScheme ?? "light"].screenBackground,
@@ -94,16 +129,26 @@ const Create = () => {
       >
         <Pressable
           style={{
-            height: 205,
+            height: 300,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#FFFFFF",
+            backgroundColor: "#F0F2F5",
             gap: 10,
           }}
-          onPress={() => console.log("Pressed")}
+          onPress={() => pickImage()}
         >
-          <Ionicons name="ios-fast-food-sharp" size={30} />
-          <Text style={{ fontSize: 20 }}>Pick image</Text>
+          {image ? (
+            <Image
+              source={{ uri: image }}
+              resizeMode="cover"
+              style={{ height: 300, width: "100%" }}
+            />
+          ) : (
+            <>
+              <Ionicons name="ios-fast-food-sharp" size={30} />
+              <Text style={{ fontSize: 20 }}>Pick image</Text>
+            </>
+          )}
         </Pressable>
         <View
           style={{
@@ -111,13 +156,14 @@ const Create = () => {
             paddingTop: 10,
             paddingBottom: 15,
             backgroundColor: "#FFFFFF",
-            marginTop: 10,
           }}
         >
           <TextInput
             style={{
               backgroundColor: "#F0F2F5",
             }}
+            value={recipeTitle}
+            onChangeText={(text) => setRecipeTitle(text)}
             textColor="black"
             mode="outlined"
             outlineColor="transparent"
@@ -129,6 +175,8 @@ const Create = () => {
             style={{
               backgroundColor: "#F0F2F5",
             }}
+            value={recipeInfo}
+            onChangeText={(text) => setRecipeInfo(text)}
             textColor="black"
             mode="outlined"
             outlineColor="transparent"
@@ -224,9 +272,3 @@ const Create = () => {
 };
 
 export default memo(Create);
-
-const styles = StyleSheet.create({
-  createContent: {
-    flex: 1,
-  },
-});

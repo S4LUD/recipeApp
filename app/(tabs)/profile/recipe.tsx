@@ -6,50 +6,111 @@ import {
   ScrollView,
   Pressable,
   useColorScheme,
+  RefreshControl,
 } from "react-native";
-import { RecommendFood } from "@/util/tempData";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Colors from "@/constants/Colors";
+import { useAuth } from "@/context/auth";
+import { useEffect, useState, useCallback } from "react";
+import { ActivityIndicator } from "react-native-paper";
+
+const RecipeItem = ({ recipe, columns }: any) => {
+  return (
+    <View style={{ flexDirection: "row", gap: 15 }}>
+      {recipe.map((_item: any, _index: number) => {
+        const { _id, title, categories, image, author } = _item;
+
+        return (
+          <Pressable
+            key={_id}
+            onPress={() =>
+              router.push({
+                pathname: "/my_view_recipe",
+                params: { _id: _id },
+              })
+            }
+          >
+            <View style={styles.RecipesTitleWrapper}>
+              <View style={styles.CategoriesContainer}>
+                {categories.map((cat: any, index: number) => {
+                  return (
+                    <View key={index} style={styles.RecipesCategory}>
+                      <Text style={styles.RecipesCategoryTitle}>{cat}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <View style={styles.RecipesDetails}>
+                <View style={styles.RecipesDetailsContainer}>
+                  <View style={{ width: 95 }}>
+                    <Text numberOfLines={2} style={styles.RecipesDetailsTitle}>
+                      {title}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="ios-ellipsis-vertical"
+                    size={20}
+                    color="white"
+                  />
+                </View>
+                <View style={styles.RecipesAdditionalInfo}>
+                  <Text style={styles.RecipesAdditionalInfoTitle}>
+                    {`By ${author?.name}`}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <Image style={styles.RecipesRecipeImage} source={{ uri: image }} />
+          </Pressable>
+        );
+      })}
+      {recipe.length < columns &&
+        Array.from(Array(columns - recipe.length).keys()).map((i) => (
+          <View
+            key={i}
+            style={{
+              width: 165,
+              height: 236,
+            }}
+          ></View>
+        ))}
+    </View>
+  );
+};
 
 export default function Recipe() {
   const colorScheme = useColorScheme();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { MyPersonalRecipes, myRecipes } = useAuth();
+
+  useEffect(() => {
+    MyPersonalRecipes();
+    setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+  }, []);
 
   // Calculate number of columns and rows
-  const empty = true;
   const columns = 2;
-  const rows = Math.ceil(RecommendFood.length / columns);
+  const rows = Math.ceil(myRecipes.length / columns);
   const matrix = [];
   for (let i = 0; i < rows; i++) {
-    matrix[i] = RecommendFood.slice(i * columns, i * columns + columns);
+    matrix[i] = myRecipes.slice(i * columns, i * columns + columns);
   }
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      MyPersonalRecipes();
+      setRefreshing(false);
+    }, 2000);
+  }, []);
 
   return (
     <View style={styles.RecipesContainer}>
-      {empty ? (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/create_recipe",
-                params: {},
-              })
-            }
-            style={{
-              paddingHorizontal: 15,
-              paddingVertical: 6,
-              borderRadius: 5,
-              backgroundColor: Colors[colorScheme ?? "light"].tint,
-            }}
-          >
-            <Text style={{ fontSize: 16, color: "#FFFFFF" }}>
-              Create recipe
-            </Text>
-          </Pressable>
-        </View>
-      ) : (
+      {matrix.length !== 0 ? (
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
@@ -61,60 +122,45 @@ export default function Recipe() {
             alignItems: "center",
           }}
           alwaysBounceVertical={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          {matrix.map((row, rowIndex) => (
-            <View key={rowIndex} style={{ flexDirection: "row", gap: 15 }}>
-              {row.map((item) => (
-                <View key={item.id} style={styles.RecipesRecipeContainer}>
-                  <View style={styles.RecipesTitleWrapper}>
-                    <View style={styles.RecipesCategory}>
-                      <Text style={styles.RecipesCategoryTitle}>
-                        {item.category}
-                      </Text>
-                    </View>
-                    <View style={styles.RecipesDetails}>
-                      <View style={styles.RecipesDetailsContainer}>
-                        <View style={{ width: 95 }}>
-                          <Text
-                            numberOfLines={2}
-                            style={styles.RecipesDetailsTitle}
-                          >
-                            {item.title}
-                          </Text>
-                        </View>
-                        <Ionicons
-                          name="ios-ellipsis-vertical"
-                          size={20}
-                          color="white"
-                        />
-                      </View>
-                      <View style={styles.RecipesAdditionalInfo}>
-                        <Text style={styles.RecipesAdditionalInfoTitle}>
-                          {`By ${item.author}`}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Image
-                    style={styles.RecipesRecipeImage}
-                    source={{ uri: "https://" + item.img }}
-                  />
-                </View>
-              ))}
-              {/* Show empty space for last row if necessary */}
-              {row.length < columns &&
-                Array.from(Array(columns - row.length).keys()).map((i) => (
-                  <View
-                    key={i}
-                    style={{
-                      width: 165,
-                      height: 236,
-                    }}
-                  ></View>
-                ))}
-            </View>
-          ))}
+          {matrix.map((recipe: any, index: number) => {
+            return <RecipeItem key={index} recipe={recipe} columns={columns} />;
+          })}
         </ScrollView>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {loading ? (
+            <ActivityIndicator size={30} />
+          ) : (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/create_recipe",
+                  params: {},
+                })
+              }
+              style={{
+                paddingHorizontal: 15,
+                paddingVertical: 6,
+                borderRadius: 5,
+                backgroundColor: Colors[colorScheme ?? "light"].tint,
+              }}
+            >
+              <Text style={{ fontSize: 16, color: "#FFFFFF" }}>
+                Create recipe
+              </Text>
+            </Pressable>
+          )}
+        </View>
       )}
     </View>
   );
@@ -143,6 +189,11 @@ const styles = StyleSheet.create({
     right: 0,
     margin: 10,
     justifyContent: "space-between",
+  },
+  CategoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
   },
   RecipesCategory: {
     backgroundColor: "rgba(0, 0, 0, 0.60)",

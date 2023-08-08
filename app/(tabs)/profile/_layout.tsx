@@ -26,8 +26,12 @@ export default function TabLayout() {
 
   const fullName: string = `${user?.firstName} ${user?.lastName}`;
 
-  const blurhash =
-    "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
+  const generateInitials = (name: string) => {
+    const nameWords = name.split(" ");
+    return nameWords
+      .map((word: string) => word.charAt(0).toUpperCase())
+      .join("");
+  };
 
   return (
     <>
@@ -59,7 +63,15 @@ export default function TabLayout() {
                 borderRadius: 100,
               }}
             >
-              <Ionicons name="person" size={26} color="gray" />
+              <Text
+                style={{
+                  color: "#9BA4B5",
+                  fontSize: 20,
+                  fontWeight: "600",
+                }}
+              >
+                {generateInitials(fullName)}
+              </Text>
             </View>
           )}
           <View>

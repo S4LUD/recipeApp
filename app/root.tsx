@@ -85,6 +85,17 @@ export default function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="my_view_recipe"
+        options={{
+          title: "",
+          headerRight: () => (
+            <Pressable onPress={() => console.log("Pressed")}>
+              <Ionicons name="ios-heart-outline" size={24} />
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
         name="settings"
         options={{
           title: "",

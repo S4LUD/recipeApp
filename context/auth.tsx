@@ -87,6 +87,8 @@ interface AuthContextValue {
   ) => void;
   triggerCreateRecipe: triggerCreate;
   SaveCreatedRecipe: () => void;
+  MyPersonalRecipes: () => void;
+  myRecipes: any;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -118,6 +120,7 @@ export function AuthProvider({
   const [triggerCreateRecipe, setTriggerCreateRecipe] = useState<triggerCreate>(
     {}
   );
+  const [myRecipes, setMyRecipes] = useState<any>([]);
 
   async function getUserProfile(token: string) {
     try {
@@ -543,6 +546,7 @@ export function AuthProvider({
       // No categories selected
       return Alert.alert("Message", "Please select at least one category.");
     }
+
     setCreateRecipeStatus(true);
     await createRecipes(
       image,
@@ -689,10 +693,35 @@ export function AuthProvider({
       });
 
       if (result.data.status) {
+        MyPersonalRecipes();
+        setCreateRecipeStatus(false);
         router.back();
       }
     }
   }
+
+  const MyPersonalRecipes = async () => {
+    try {
+      const storedToken = await SecureStore.getItemAsync("token");
+
+      if (storedToken) {
+        const response = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/api/user/recipes`,
+          {
+            headers: {
+              authorization_r: `Bearer ${storedToken}`,
+            },
+          }
+        );
+
+        if (response.data) {
+          setMyRecipes(response.data);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useProtectedRoute();
 
@@ -718,6 +747,8 @@ export function AuthProvider({
         SaveCreatedRecipe,
         triggerCreateRecipe,
         createRecipeStatus,
+        MyPersonalRecipes,
+        myRecipes,
       }}
     >
       {children}

@@ -134,7 +134,7 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
               outlineColor="transparent"
               activeOutlineColor={Colors[colorScheme ?? "light"].tint}
               multiline={true}
-              maxLength={200}
+              maxLength={1000}
               onFocus={() => handleFocus(index)}
               onBlur={handleBlur}
               keyboardAppearance="light"
@@ -148,10 +148,12 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
                 gap: 6,
               }}
             >
-              {input.images ? (
+              {input.images?.uri ? (
                 <Pressable key={index} onPress={() => pickImage(input.id)}>
                   <Image
-                    source={{ uri: input.images.uri }}
+                    source={{
+                      uri: input.images?.uri,
+                    }}
                     style={{ height: 85, width: 85, borderRadius: 5 }}
                   />
                 </Pressable>

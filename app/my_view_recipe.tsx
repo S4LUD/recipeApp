@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import {
   View,
   Image,
@@ -16,10 +16,20 @@ import { useAuth } from "@/context/auth";
 const Viewer = () => {
   const params = useLocalSearchParams();
   const { _id } = params as any;
-  const { myRecipes } = useAuth();
+  const { myRecipes, triggerUpdateRecipeID } = useAuth();
 
   const recipe = myRecipes.filter((item: any) => {
     return item._id === _id;
+  });
+
+  const sortedMethods = recipe[0].methods
+    .slice()
+    .sort(
+      (a: { number: number }, b: { number: number }) => a.number - b.number
+    );
+
+  useEffect(() => {
+    triggerUpdateRecipeID(_id);
   });
 
   return (
@@ -59,10 +69,22 @@ const Viewer = () => {
             Ingredients
           </Text>
           {recipe[0].ingredients.map((ingredient: any, index: number) => {
+            const isSection = ingredient.isSection;
+            const showMargin = index > 0 && isSection; // Determine whether to show margin
             return (
-              <View key={index}>
-                <Text style={styles.ingredientText}>{ingredient.value}</Text>
-                {index !== recipe[0].ingredients.length - 1 && (
+              <View key={index} style={{ marginTop: showMargin ? 10 : 0 }}>
+                <Text
+                  style={[
+                    styles.ingredientText,
+                    {
+                      fontSize: isSection ? 18 : 16,
+                      fontWeight: isSection ? "600" : "400",
+                    },
+                  ]}
+                >
+                  {ingredient.value}
+                </Text>
+                {index !== recipe[0].ingredients.length - 1 && !isSection && (
                   <View
                     style={[
                       styles.separator,
@@ -90,7 +112,7 @@ const Viewer = () => {
           <Text style={{ fontSize: 22, fontWeight: "500", paddingBottom: 20 }}>
             Methods
           </Text>
-          {recipe[0].methods.map((method: any, index: number) => {
+          {sortedMethods.map((method: any, index: number) => {
             return (
               <View style={styles.methodContainer} key={index}>
                 <View style={styles.circle}>
@@ -98,15 +120,16 @@ const Viewer = () => {
                 </View>
                 <View style={styles.methodTextContainer}>
                   <Text style={styles.methodText}>{method.value}</Text>
-                  <Image
-                    source={{ uri: method.secure_url }}
-                    style={{
-                      height: 200,
-                      width: 250,
-                      borderRadius: 5,
-                      marginTop: 10,
-                    }}
-                  />
+                  {method.secure_url && (
+                    <Image
+                      source={{ uri: method.secure_url }}
+                      style={{
+                        height: 200,
+                        borderRadius: 5,
+                        marginTop: 10,
+                      }}
+                    />
+                  )}
                 </View>
               </View>
             );
@@ -142,7 +165,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   ingredientText: {
-    fontSize: 16,
     paddingVertical: 5,
   },
   separator: {

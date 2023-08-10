@@ -13,6 +13,8 @@ export default function RootLayoutNav() {
     useUpdate,
     createRecipeStatus,
     SaveCreatedRecipe,
+    GotoUpdateRecipeScreen,
+    DeleteRecipe,
   } = useAuth();
 
   if (!authInitialized && !user) return;
@@ -85,13 +87,87 @@ export default function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="update_recipe"
+        options={{
+          title: "",
+          headerRight: () => (
+            <View style={{ gap: 5, flexDirection: "row" }}>
+              <Pressable
+                onPress={() => router.back()}
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 6,
+                  borderRadius: 5,
+                  borderColor: "#FA3636",
+                  borderWidth: 1.5,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: "#FA3636",
+                  }}
+                >
+                  Discard
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => SaveCreatedRecipe()}
+                disabled={createRecipeStatus}
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 6,
+                  borderRadius: 5,
+                  borderColor: Colors[colorScheme ?? "light"].tint,
+                  borderWidth: 1.5,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: Colors[colorScheme ?? "light"].tint,
+                  }}
+                >
+                  Save
+                </Text>
+              </Pressable>
+            </View>
+          ),
+        }}
+      />
+      <Stack.Screen
         name="my_view_recipe"
         options={{
           title: "",
           headerRight: () => (
-            <Pressable onPress={() => console.log("Pressed")}>
-              <Ionicons name="ios-heart-outline" size={24} />
-            </Pressable>
+            <View style={{ flexDirection: "row", gap: 5 }}>
+              <Pressable
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 6,
+                  borderRadius: 5,
+                  backgroundColor: "#FA3636",
+                }}
+                onPress={() => {
+                  DeleteRecipe();
+                }}
+              >
+                <Text style={{ fontSize: 16, color: "#FFFFFF" }}>Delete</Text>
+              </Pressable>
+              <Pressable
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 6,
+                  borderRadius: 5,
+                  backgroundColor: Colors[colorScheme ?? "light"].tint,
+                }}
+                onPress={() => {
+                  GotoUpdateRecipeScreen();
+                }}
+              >
+                <Text style={{ fontSize: 16, color: "#FFFFFF" }}>Update</Text>
+              </Pressable>
+            </View>
           ),
         }}
       />

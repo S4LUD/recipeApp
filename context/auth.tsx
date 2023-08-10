@@ -22,6 +22,7 @@ export interface User {
 }
 
 interface createRecipe {
+  _id: string;
   image?: ImageInterface;
   title?: string;
   info?: string;
@@ -31,6 +32,7 @@ interface createRecipe {
 }
 
 interface triggerCreate {
+  _id?: string;
   image?: string;
   title?: string;
   info?: string;
@@ -78,6 +80,7 @@ interface AuthContextValue {
   loginStatus: boolean;
   signUpStatus: boolean;
   triggerCreateRecipes: (
+    _id: string,
     image: string,
     title: string,
     info: string,
@@ -89,6 +92,9 @@ interface AuthContextValue {
   SaveCreatedRecipe: () => void;
   MyPersonalRecipes: () => void;
   myRecipes: any;
+  triggerUpdateRecipeID: (_id: string) => void;
+  GotoUpdateRecipeScreen: () => void;
+  DeleteRecipe: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -121,6 +127,7 @@ export function AuthProvider({
     {}
   );
   const [myRecipes, setMyRecipes] = useState<any>([]);
+  const [updateRecipe, setUpdateRecipe] = useState<string>("");
 
   async function getUserProfile(token: string) {
     try {
@@ -187,10 +194,12 @@ export function AuthProvider({
           setAuthInitialized(true);
         } catch (error) {
           console.log("Error:", error);
-          setAuthInitialized(true); // Set auth initialized even if there's an error
+          setAuthInitialized(true);
+          setLoginStatus(false); // Set auth initialized even if there's an error
         }
       } else {
-        setAuthInitialized(true); // No token, so auth is initialized
+        setAuthInitialized(true);
+        setLoginStatus(false); // No token, so auth is initialized
       }
     })();
   }, []);
@@ -225,6 +234,17 @@ export function AuthProvider({
         router.replace("/(tabs)/dashboard");
       }
     }, [user, segments, authInitialized, isNavigationReady]);
+  }
+
+  async function triggerUpdateRecipeID(_id: string) {
+    setUpdateRecipe(_id);
+  }
+
+  async function GotoUpdateRecipeScreen() {
+    router.push({
+      pathname: "/update_recipe",
+      params: { _id: updateRecipe },
+    });
   }
 
   async function save(key: string, value: string) {
@@ -507,6 +527,7 @@ export function AuthProvider({
   }
 
   const triggerCreateRecipes = async (
+    _id: string,
     image: string,
     title: string,
     info: string,
@@ -515,6 +536,7 @@ export function AuthProvider({
     methods: MethodsInputValue[]
   ) => {
     setTriggerCreateRecipe({
+      _id,
       image,
       title,
       info,
@@ -525,7 +547,7 @@ export function AuthProvider({
   };
 
   const SaveCreatedRecipe = async () => {
-    const { image, title, info, ingredients, categories, methods } =
+    const { _id, image, title, info, ingredients, categories, methods } =
       triggerCreateRecipe;
 
     if (!image) {
@@ -549,6 +571,7 @@ export function AuthProvider({
 
     setCreateRecipeStatus(true);
     await createRecipes(
+      _id || "",
       image,
       title,
       info || "",
@@ -559,6 +582,7 @@ export function AuthProvider({
   };
 
   const createRecipes = async (
+    _id: string,
     image: string,
     title: string,
     info: string,
@@ -566,25 +590,15 @@ export function AuthProvider({
     categories: any,
     methods: MethodsInputValue[]
   ) => {
-    if (methods.length !== 0) {
-      const result = await uploadMethods(methods);
-      if (result) {
-        const CreateRecipe = {
-          title: title || "Untitled",
-          info: info || "No information available",
-          ingredients: ingredients,
-          categories: categories,
-          methods: result,
-        };
-        UploadRecipe(image, CreateRecipe);
-      }
-    } else {
+    const result = await uploadMethods(methods);
+    if (result) {
       const CreateRecipe = {
+        _id: _id,
         title: title || "Untitled",
         info: info || "No information available",
         ingredients: ingredients,
         categories: categories,
-        methods: methods,
+        methods: result,
       };
       UploadRecipe(image, CreateRecipe);
     }
@@ -621,11 +635,11 @@ export function AuthProvider({
 
   const uploadMethods = async (methods: MethodsInputValue[]) => {
     const storedToken = await SecureStore.getItemAsync("token");
-    const newMethodsData: MethodsInputValue[] = []; // Create an array to hold uploaded data
+    const newMethodsData: any[] = []; // Create an array to hold uploaded data
 
     const uploadPromises = methods.map(async (item) => {
       try {
-        if (item.images) {
+        if (item.images?.uri) {
           const formData = new FormData();
           formData.append("image", {
             uri: item.images.uri,
@@ -651,6 +665,11 @@ export function AuthProvider({
               ...result.data,
             });
           }
+        } else {
+          newMethodsData.push({
+            value: item.value,
+            number: item.number,
+          });
         }
       } catch (error) {
         console.error("Error uploading image:", error);
@@ -662,6 +681,7 @@ export function AuthProvider({
       await Promise.all(uploadPromises);
       return newMethodsData;
     } catch (error) {
+      setCreateRecipeStatus(false);
       console.error("Error uploading images:", error);
     }
   };
@@ -698,6 +718,7 @@ export function AuthProvider({
         router.back();
       }
     }
+    setCreateRecipeStatus(false);
   }
 
   const MyPersonalRecipes = async () => {
@@ -717,6 +738,56 @@ export function AuthProvider({
         if (response.data) {
           setMyRecipes(response.data);
         }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const DeleteRecipe = async () => {
+    try {
+      const storedToken = await SecureStore.getItemAsync("token");
+
+      if (storedToken) {
+        Alert.alert(
+          "Confirm Delete",
+          "Are you sure you want to delete this recipe?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Delete",
+              onPress: async () => {
+                await axios
+                  .request({
+                    method: "delete",
+                    maxBodyLength: Infinity,
+                    url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/delete/recipe`,
+                    headers: {
+                      authorization_r: `Bearer ${storedToken}`,
+                      "Content-Type": "application/json",
+                    },
+                    data: JSON.stringify({
+                      _id: updateRecipe,
+                    }),
+                  })
+                  .then((response) => {
+                    if (response.data) {
+                      MyPersonalRecipes();
+                      router.back();
+                    }
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  });
+              },
+              style: "destructive",
+            },
+          ],
+          { cancelable: true }
+        );
       }
     } catch (error) {
       console.log(error);
@@ -749,6 +820,9 @@ export function AuthProvider({
         createRecipeStatus,
         MyPersonalRecipes,
         myRecipes,
+        triggerUpdateRecipeID: (_id: string) => triggerUpdateRecipeID(_id),
+        GotoUpdateRecipeScreen,
+        DeleteRecipe,
       }}
     >
       {children}

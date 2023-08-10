@@ -23,6 +23,8 @@ import DynamicMethodsInputs, {
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@/context/auth";
 import { useLocalSearchParams } from "expo-router";
+import path from "path";
+import mimeType from "react-native-mime-types";
 
 const LoadingIndicator = () => (
   <View
@@ -44,17 +46,56 @@ const LoadingIndicator = () => (
 
 const Create = () => {
   const { _id }: { _id: string } = useLocalSearchParams();
-  const { triggerCreateRecipes, createRecipeStatus } = useAuth();
+  const { triggerCreateRecipes, createRecipeStatus, myRecipes } = useAuth();
+  const recipe = myRecipes.filter((item: any) => {
+    return item._id === _id;
+  });
+
   const colorScheme = useColorScheme();
   const headerHeight = useHeaderHeight();
   const [IngredientsData, setIngredientsData] = useState<
     IngredientsInputValue[]
-  >([]);
-  const [MethodsData, setMethodsData] = useState<MethodsInputValue[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [image, setImage] = useState<string | null>("");
-  const [recipeTitle, setRecipeTitle] = useState<string | undefined>(undefined);
-  const [recipeInfo, setRecipeInfo] = useState<string | undefined>(undefined);
+  >(
+    recipe[0].ingredients.map((item: { value: string; isSection: boolean }) => {
+      const { value, isSection } = item;
+      const ingredientData: IngredientsInputValue = { value };
+      if (isSection) {
+        ingredientData.isSection = isSection;
+      }
+      return ingredientData;
+    })
+  );
+  const [MethodsData, setMethodsData] = useState<MethodsInputValue[]>(
+    recipe[0].methods.map(
+      (item: {
+        _id: string;
+        number: number;
+        value: string;
+        secure_url: string;
+      }): MethodsInputValue => {
+        return {
+          id: item._id,
+          number: item.number,
+          value: item.value,
+          images: {
+            uri: item.secure_url,
+            type: mimeType.lookup(item.secure_url) || "", // You might need to set this based on the actual image type
+            name: path.basename(item.secure_url), // You might need to import 'path' module for this
+          },
+        };
+      }
+    )
+  );
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    recipe[0].categories
+  );
+  const [image, setImage] = useState<string | null>(recipe[0].image);
+  const [recipeTitle, setRecipeTitle] = useState<string | undefined>(
+    recipe[0].title
+  );
+  const [recipeInfo, setRecipeInfo] = useState<string | undefined>(
+    recipe[0].info
+  );
 
   const categories = [
     "Breakfast",
@@ -99,7 +140,7 @@ const Create = () => {
 
   useEffect(() => {
     triggerCreateRecipes(
-      _id || "",
+      _id,
       image || "",
       recipeTitle || "",
       recipeInfo || "",
@@ -172,11 +213,8 @@ const Create = () => {
             mode="outlined"
             outlineColor="transparent"
             activeOutlineColor={Colors[colorScheme ?? "light"].tint}
-            multiline={true}
             placeholder="Title: Apple Pie"
             placeholderTextColor="#D8D8D8"
-            maxLength={200}
-            blurOnSubmit={true}
           />
           <TextInput
             style={{
@@ -189,9 +227,9 @@ const Create = () => {
             outlineColor="transparent"
             activeOutlineColor={Colors[colorScheme ?? "light"].tint}
             multiline={true}
-            placeholder="About the recipe."
+            numberOfLines={5}
+            placeholder="Indulge your taste buds with a delightful array of food likes! From savory delights that dance on your tongue to sweet treats that melt in your mouth, there's something to please every palate. "
             placeholderTextColor="#D8D8D8"
-            maxLength={1000}
           />
         </View>
         <View

@@ -43,16 +43,11 @@ const RecipeItem = ({ recipe, columns }: any) => {
               </View>
               <View style={styles.RecipesDetails}>
                 <View style={styles.RecipesDetailsContainer}>
-                  <View style={{ width: 95 }}>
-                    <Text numberOfLines={2} style={styles.RecipesDetailsTitle}>
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={3} style={styles.RecipesDetailsTitle}>
                       {title}
                     </Text>
                   </View>
-                  <Ionicons
-                    name="ios-ellipsis-vertical"
-                    size={20}
-                    color="white"
-                  />
                 </View>
                 <View style={styles.RecipesAdditionalInfo}>
                   <Text style={styles.RecipesAdditionalInfoTitle}>

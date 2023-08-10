@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 export interface IngredientsInputValue {
   value: string;
+  isSection?: boolean;
 }
 
 interface DynamicInputsProps {
@@ -44,6 +45,16 @@ const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
     ]);
   };
 
+  const handleAddSection = () => {
+    setInputValues([
+      ...inputValues,
+      {
+        value: "",
+        isSection: true,
+      },
+    ]);
+  };
+
   const handleRemoveInput = (index: number) => {
     const newInputValues = inputValues.filter((_, i) => i !== index);
     setInputValues(newInputValues);
@@ -66,7 +77,11 @@ const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
       {inputValues.map((input, index) => (
         <View key={index} style={styles.inputContainer}>
           <View style={{ paddingTop: 20 }}>
-            <Ionicons color="#D8D8D8" name="menu-sharp" size={20} />
+            <Ionicons
+              color="#D8D8D8"
+              name={input.isSection ? "chevron-forward-outline" : "menu-sharp"}
+              size={20}
+            />
           </View>
           <View style={{ flex: 1 }}>
             <TextInput
@@ -75,7 +90,9 @@ const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
               }}
               value={input.value}
               onChangeText={(text) => handleInputChange(text, index)}
-              placeholder="Paprika - 1 tsp (5g)"
+              placeholder={
+                input.isSection ? "Section title" : "Paprika - 1 tsp (5g)"
+              }
               placeholderTextColor="#D8D8D8"
               textColor="black"
               mode="outlined"
@@ -99,19 +116,41 @@ const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
           </View>
         </View>
       ))}
-      <View style={{ alignItems: "center" }}>
-        <Pressable
-          style={{
-            flexDirection: "row",
-            gap: 5,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onPress={handleAddInput}
-        >
-          <Ionicons name="add-outline" size={24} />
-          <Text style={{ fontSize: 16 }}>Ingredient</Text>
-        </Pressable>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              gap: 5,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onPress={handleAddSection}
+          >
+            <Ionicons name="add-outline" size={24} />
+            <Text style={{ fontSize: 16 }}>Section</Text>
+          </Pressable>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Pressable
+            style={{
+              flexDirection: "row",
+              gap: 5,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onPress={handleAddInput}
+          >
+            <Ionicons name="add-outline" size={24} />
+            <Text style={{ fontSize: 16 }}>Ingredient</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );

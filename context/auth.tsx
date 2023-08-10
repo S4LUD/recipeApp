@@ -38,7 +38,9 @@ interface triggerCreate {
   info?: string;
   ingredients?: IngredientsInputValue[];
   methods?: MethodsInputValue[];
-  categories?: string[]; // Add the categories property
+  categories?: string[];
+  userId?: string;
+  author?: string;
 }
 
 export interface UpdatedUser {
@@ -95,6 +97,8 @@ interface AuthContextValue {
   triggerUpdateRecipeID: (_id: string) => void;
   GotoUpdateRecipeScreen: () => void;
   DeleteRecipe: () => void;
+  fetchRecommendation: () => void;
+  RecommendFood: any[];
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -128,6 +132,30 @@ export function AuthProvider({
   );
   const [myRecipes, setMyRecipes] = useState<any>([]);
   const [updateRecipe, setUpdateRecipe] = useState<string>("");
+  const [RecommendFood, setRecommendFood] = useState<any[]>([]);
+
+  const fetchRecommendation = async () => {
+    try {
+      const storedToken = await SecureStore.getItemAsync("token");
+
+      if (storedToken) {
+        const response = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/api/user/recipes/recommendations`,
+          {
+            headers: {
+              authorization_r: `Bearer ${storedToken}`,
+            },
+          }
+        );
+
+        if (response.data) {
+          setRecommendFood(response.data);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   async function getUserProfile(token: string) {
     try {
@@ -823,6 +851,8 @@ export function AuthProvider({
         triggerUpdateRecipeID: (_id: string) => triggerUpdateRecipeID(_id),
         GotoUpdateRecipeScreen,
         DeleteRecipe,
+        fetchRecommendation,
+        RecommendFood,
       }}
     >
       {children}

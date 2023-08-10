@@ -49,11 +49,6 @@ const RecipeItem = ({ recipe, columns }: any) => {
                     </Text>
                   </View>
                 </View>
-                <View style={styles.RecipesAdditionalInfo}>
-                  <Text style={styles.RecipesAdditionalInfoTitle}>
-                    {`By ${author?.name}`}
-                  </Text>
-                </View>
               </View>
             </View>
             <Image style={styles.RecipesRecipeImage} source={{ uri: image }} />

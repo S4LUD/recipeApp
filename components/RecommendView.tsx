@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import {
   Text,
   View,
@@ -8,10 +8,12 @@ import {
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { RecommendFood } from "@/util/tempData";
 import { router } from "expo-router";
+import { useAuth } from "@/context/auth";
 
 const RecommendView = () => {
+  const { user, RecommendFood, fetchRecommendation } = useAuth();
+
   const filterByCat = [
     "Breakfast",
     "Brunch",
@@ -21,6 +23,10 @@ const RecommendView = () => {
     "Main",
     "Dessert",
   ];
+
+  useEffect(() => {
+    fetchRecommendation();
+  }, []);
 
   return (
     <View style={styles.RecommendContainer}>
@@ -60,44 +66,33 @@ const RecommendView = () => {
         showsHorizontalScrollIndicator={false}
       >
         {RecommendFood.map((item) => {
-          const {
-            id,
-            title,
-            category,
-            author,
-            img,
-          }: {
-            id: number;
-            title: string;
-            category: string;
-            author: string;
-            img: string;
-          } = item;
-
+          const { _id, userId, title, categories, author, image } = item;
           return (
             <Pressable
               onPress={() => {
                 router.push({
                   pathname: "/view_recipe",
                   params: {
-                    id: id,
-                    title: title,
-                    category: category,
-                    author: author,
-                    img: img,
+                    _id: _id,
                   },
                 });
               }}
-              key={id}
+              key={_id}
               style={styles.RecommendRecipeContainer}
             >
               <View style={styles.RecommendTitleWrapper}>
-                <View style={styles.RecommendCategory}>
-                  <Text style={styles.RecommendCategoryTitle}>{category}</Text>
+                <View style={styles.CategoriesContainer}>
+                  {categories.map((cat: string, index: number) => {
+                    return (
+                      <View key={index} style={styles.RecipesCategory}>
+                        <Text style={styles.RecipesCategoryTitle}>{cat}</Text>
+                      </View>
+                    );
+                  })}
                 </View>
                 <View style={styles.RecommendDetails}>
                   <View style={styles.RecommendDetailsContainer}>
-                    <View style={{ width: 95 }}>
+                    <View style={{ flex: 1 }}>
                       <Text
                         numberOfLines={2}
                         style={styles.RecommendDetailsTitle}
@@ -105,22 +100,24 @@ const RecommendView = () => {
                         {title}
                       </Text>
                     </View>
-                    <Ionicons
-                      name="ios-heart-outline"
-                      size={20}
-                      color="#FFFFFF"
-                    />
+                    {user?._id !== userId && (
+                      <Ionicons
+                        name="ios-heart-outline"
+                        size={20}
+                        color="#FFFFFF"
+                      />
+                    )}
                   </View>
                   <View style={styles.RecommendAdditionalInfo}>
                     <Text style={styles.RecommendAdditionalInfoTitle}>
-                      {`By ${author}`}
+                      {`By ${author?.name}`}
                     </Text>
                   </View>
                 </View>
               </View>
               <Image
                 style={styles.RecommendRecipeImage}
-                source={{ uri: "https://" + img }}
+                source={{ uri: image }}
               />
             </Pressable>
           );
@@ -138,6 +135,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingBottom: 15,
     paddingTop: 15,
+  },
+  CategoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+  },
+  RecipesCategory: {
+    backgroundColor: "rgba(0, 0, 0, 0.60)",
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+  },
+  RecipesCategoryTitle: {
+    textTransform: "capitalize",
+    color: "white",
+    fontSize: 10,
+    fontWeight: "500",
   },
   RecommendRecipeContainer: {
     position: "relative",

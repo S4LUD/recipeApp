@@ -11,88 +11,83 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import LetterProfile from "@/components/LetterProfile";
 import ShowMoreText from "@/components/ShowMoreText";
-
-type SearchParams = {
-  id: string;
-  title: string;
-  category: string;
-  author: string;
-  img: string;
-};
+import { useAuth } from "@/context/auth";
 
 const Viewer = () => {
   const params = useLocalSearchParams();
-  const { id, title, category, author, img } = params as SearchParams;
+  const { user, RecommendFood } = useAuth();
+  const { _id } = params as any;
 
-  const desc =
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores iusto beatae alias error, aut magnam nesciunt perferendis tenetur reprehenderit ut nulla suscipit atque praesentium accusantium, vitae voluptatum quas consequuntur sint.";
+  const recipe = RecommendFood.filter((item: any) => {
+    return item._id === _id;
+  });
 
-  const ing = [
-    "Ingredients 1",
-    "Ingredients 2",
-    "Ingredients 3",
-    "Ingredients 4",
-    "Ingredients 5",
-    "Ingredients 6",
-    "Ingredients 7",
-  ];
-
-  const met = [
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores iusto beatae alias error, aut magnam nesciunt perferendis tenetur reprehenderit ut nulla suscipit atque praesentium accusantium, vitae voluptatum quas consequuntur sint.",
-    "Method 2",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores iusto beatae alias error, aut magnam nesciunt perferendis tenetur reprehenderit ut nulla suscipit atque praesentium accusantium, vitae voluptatum quas consequuntur sint.",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores iusto beatae alias error, aut magnam nesciunt perferendis tenetur reprehenderit ut nulla suscipit atque praesentium accusantium, vitae voluptatum quas consequuntur sint.",
-    "Method 5",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores iusto beatae alias error, aut magnam nesciunt perferendis tenetur reprehenderit ut nulla suscipit atque praesentium accusantium, vitae voluptatum quas consequuntur sint.",
-  ];
+  const sortedMethods = recipe[0].methods
+    .slice()
+    .sort(
+      (a: { number: number }, b: { number: number }) => a.number - b.number
+    );
 
   return (
     <ScrollView
-      key={id}
       style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       bounces={false}
     >
-      <Image style={styles.foodImage} source={{ uri: "https://" + img }} />
+      <Image style={styles.foodImage} source={{ uri: recipe[0]?.image }} />
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{recipe[0]?.title}</Text>
         <View style={styles.userContent}>
           <LetterProfile
-            name={author}
+            name={recipe[0]?.author.name}
             size={50}
             fontSize={16}
             backgroundColor="#D4E2D4"
             textColor="#000000"
           />
           <View style={styles.userInfo}>
-            <Text>{author}</Text>
-            <Text>@{category}</Text>
+            <Text>{recipe[0]?.author.name}</Text>
+            <Text>@{recipe[0]?.author.username}</Text>
           </View>
         </View>
         <View style={styles.detailsContent}>
-          <ShowMoreText fontSize={16} text={desc} maxLength={100} />
+          <ShowMoreText fontSize={16} text={recipe[0]?.info} maxLength={100} />
         </View>
         <View>
           <Text style={{ fontSize: 22, fontWeight: "500", paddingBottom: 20 }}>
             Ingredients
           </Text>
-          {ing.map((ingredient, index) => (
-            <View key={index}>
-              <Text style={styles.ingredientText}>{ingredient}</Text>
-              {index !== ing.length - 1 && (
-                <View
+          {recipe[0].ingredients.map((ingredient: any, index: number) => {
+            const isSection = ingredient.isSection;
+            const showMargin = index > 0 && isSection; // Determine whether to show margin
+            return (
+              <View key={index} style={{ marginTop: showMargin ? 10 : 0 }}>
+                <Text
                   style={[
-                    styles.separator,
+                    styles.ingredientText,
                     {
-                      borderBottomWidth: StyleSheet.hairlineWidth,
-                      borderStyle: Platform.OS !== "ios" ? "dashed" : undefined,
+                      fontSize: isSection ? 18 : 16,
+                      fontWeight: isSection ? "600" : "400",
                     },
                   ]}
-                />
-              )}
-            </View>
-          ))}
+                >
+                  {ingredient.value}
+                </Text>
+                {index !== recipe[0].ingredients.length - 1 && !isSection && (
+                  <View
+                    style={[
+                      styles.separator,
+                      {
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        borderStyle:
+                          Platform.OS !== "ios" ? "dashed" : undefined,
+                      },
+                    ]}
+                  />
+                )}
+              </View>
+            );
+          })}
         </View>
         <Animated.View
           style={{
@@ -106,16 +101,28 @@ const Viewer = () => {
           <Text style={{ fontSize: 22, fontWeight: "500", paddingBottom: 20 }}>
             Methods
           </Text>
-          {met.map((method, index) => (
-            <View style={styles.methodContainer} key={index}>
-              <View style={styles.circle}>
-                <Text style={styles.number}>{index + 1}</Text>
+          {sortedMethods.map((method: any, index: number) => {
+            return (
+              <View style={styles.methodContainer} key={index}>
+                <View style={styles.circle}>
+                  <Text style={styles.number}>{method.number}</Text>
+                </View>
+                <View style={styles.methodTextContainer}>
+                  <Text style={styles.methodText}>{method.value}</Text>
+                  {method.secure_url && (
+                    <Image
+                      source={{ uri: method.secure_url }}
+                      style={{
+                        height: 200,
+                        borderRadius: 5,
+                        marginTop: 10,
+                      }}
+                    />
+                  )}
+                </View>
               </View>
-              <View style={styles.methodTextContainer}>
-                <Text style={styles.methodText}>{method}</Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </View>
     </ScrollView>

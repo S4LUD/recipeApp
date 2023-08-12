@@ -40,23 +40,29 @@ export default function Signout() {
   }, [navigation]);
 
   const _signUp = async () => {
+    if (username)
+      if (/\s/.test(username)) {
+        return setError("The username must not contain spaces.");
+      }
+
+    if (password)
+      if (/\s/.test(password)) {
+        return setError("The password must not contain spaces.");
+      }
+
+    if (password !== confirmPassword) {
+      setSuccess("");
+      setError("Password do not match");
+    } else {
+      setError("");
+      setSuccess("Password matched");
+    }
+
     const result = await signUp(username, password, firstName, lastName);
     if (result?.status === false) {
       setError(result.message);
     }
   };
-
-  useEffect(() => {
-    if (confirmPassword !== "") {
-      if (password !== confirmPassword) {
-        setSuccess("");
-        setError("Password do not match");
-      } else {
-        setError("");
-        setSuccess("Password matched");
-      }
-    }
-  }, [confirmPassword]);
 
   return (
     <View
@@ -132,6 +138,7 @@ export default function Signout() {
                 backgroundColor: "#F0F2F5",
               }}
               onChangeText={(text) => setUsername(text)}
+              keyboardType="visible-password" // This prevents spaces from being entered
               textColor="black"
               mode="flat"
               outlineColor="transparent"

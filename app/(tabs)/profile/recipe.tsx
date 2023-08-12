@@ -3,153 +3,94 @@ import {
   Text,
   View,
   Image,
-  ScrollView,
+  FlatList,
   Pressable,
-  useColorScheme,
   RefreshControl,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import Colors from "@/constants/Colors";
 import { useAuth } from "@/context/auth";
-import { useEffect, useState, useCallback } from "react";
-import { ActivityIndicator } from "react-native-paper";
+import { useState, useCallback } from "react";
 
-const RecipeItem = ({ recipe, columns }: any) => {
+const RecipeItem = ({ item }: any) => {
+  const { _id, title, categories, image } = item;
+
+  const goToRecipeDetails = () => {
+    router.push({
+      pathname: "/my_view_recipe",
+      params: { _id: _id },
+    });
+  };
+
   return (
-    <View style={{ flexDirection: "row", gap: 15 }}>
-      {recipe.map((_item: any, _index: number) => {
-        const { _id, title, categories, image, author } = _item;
-
-        return (
-          <Pressable
-            key={_id}
-            onPress={() =>
-              router.push({
-                pathname: "/my_view_recipe",
-                params: { _id: _id },
-              })
-            }
-          >
-            <View style={styles.RecipesTitleWrapper}>
-              <View style={styles.CategoriesContainer}>
-                {categories.map((cat: any, index: number) => {
-                  return (
-                    <View key={index} style={styles.RecipesCategory}>
-                      <Text style={styles.RecipesCategoryTitle}>{cat}</Text>
-                    </View>
-                  );
-                })}
+    <Pressable key={_id} onPress={() => goToRecipeDetails()}>
+      <View style={styles.RecipesTitleWrapper}>
+        <View style={styles.CategoriesContainer}>
+          {categories.map((cat: any, index: number) => {
+            return (
+              <View key={index} style={styles.RecipesCategory}>
+                <Text style={styles.RecipesCategoryTitle}>{cat}</Text>
               </View>
-              <View style={styles.RecipesDetails}>
-                <View style={styles.RecipesDetailsContainer}>
-                  <View style={{ flex: 1 }}>
-                    <Text numberOfLines={3} style={styles.RecipesDetailsTitle}>
-                      {title}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+            );
+          })}
+        </View>
+        <View style={styles.RecipesDetails}>
+          <View style={styles.RecipesDetailsContainer}>
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={3} style={styles.RecipesDetailsTitle}>
+                {title}
+              </Text>
             </View>
-            <Image style={styles.RecipesRecipeImage} source={{ uri: image }} />
-          </Pressable>
-        );
-      })}
-      {recipe.length < columns &&
-        Array.from(Array(columns - recipe.length).keys()).map((i) => (
-          <View
-            key={i}
-            style={{
-              width: 165,
-              height: 236,
-            }}
-          ></View>
-        ))}
-    </View>
+          </View>
+        </View>
+      </View>
+      <Image style={styles.RecipesRecipeImage} source={{ uri: image }} />
+    </Pressable>
   );
 };
 
 export default function Recipe() {
-  const colorScheme = useColorScheme();
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const { MyPersonalRecipes, myRecipes } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const { MyRecipe, fetchUserData } = useAuth();
 
-  useEffect(() => {
-    MyPersonalRecipes();
-    setTimeout(() => {
-      setLoading(false);
-    }, 2500);
-  }, []);
-
-  // Calculate number of columns and rows
   const columns = 2;
-  const rows = Math.ceil(myRecipes.length / columns);
-  const matrix = [];
-  for (let i = 0; i < rows; i++) {
-    matrix[i] = myRecipes.slice(i * columns, i * columns + columns);
-  }
+
+  const renderRecipeItem = ({ item }: any) => {
+    return <RecipeItem item={item} />;
+  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => {
-      MyPersonalRecipes();
-      setRefreshing(false);
-    }, 2000);
-  }, []);
+    fetchUserData();
+    setRefreshing(false);
+  }, [fetchUserData]);
 
   return (
     <View style={styles.RecipesContainer}>
-      {matrix.length !== 0 ? (
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            gap: 15,
-            paddingLeft: 15,
-            paddingRight: 15,
-            paddingTop: 15,
-            paddingBottom: 15,
-            alignItems: "center",
-          }}
-          alwaysBounceVertical={false}
+      {MyRecipe.length !== 0 ? (
+        <FlatList
+          data={MyRecipe}
+          keyExtractor={(item) => item._id}
+          numColumns={columns}
+          renderItem={renderRecipeItem}
+          contentContainerStyle={styles.scrollViewContent}
+          columnWrapperStyle={{ gap: 15 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-        >
-          {matrix.map((recipe: any, index: number) => {
-            return <RecipeItem key={index} recipe={recipe} columns={columns} />;
-          })}
-        </ScrollView>
+        />
       ) : (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          {loading ? (
-            <ActivityIndicator size={30} />
-          ) : (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/create_recipe",
-                  params: {},
-                })
-              }
-              style={{
-                paddingHorizontal: 15,
-                paddingVertical: 6,
-                borderRadius: 5,
-                backgroundColor: Colors[colorScheme ?? "light"].tint,
-              }}
-            >
-              <Text style={{ fontSize: 16, color: "#FFFFFF" }}>
-                Create recipe
-              </Text>
-            </Pressable>
-          )}
+        <View style={styles.centerContainer}>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/create_recipe",
+                params: {},
+              })
+            }
+            style={styles.createButton}
+          >
+            <Text style={styles.createButtonText}>Create recipe</Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -157,6 +98,27 @@ export default function Recipe() {
 }
 
 const styles = StyleSheet.create({
+  scrollViewContent: {
+    flexGrow: 1,
+    gap: 15,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  createButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 6,
+    borderRadius: 5,
+    backgroundColor: "#3CA2FA",
+  },
+  createButtonText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
   RecipesContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",

@@ -1,3 +1,4 @@
+import React, { useEffect, memo } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,113 +7,81 @@ import {
   ScrollView,
   Pressable,
 } from "react-native";
-import { RecentFood } from "@/util/tempData";
 import { Ionicons } from "@expo/vector-icons";
-import { memo } from "react";
 import { router } from "expo-router";
+import { useAuth } from "@/context/auth";
 
-const RecentRecipe = () => {
-  // Convert 1-dimensional array to 2-dimensional array
-  const columns = 2;
-  const rows = Math.ceil(RecentFood.length / columns);
-  const matrix = [];
-  for (let i = 0; i < rows; i++) {
-    matrix[i] = RecentFood.slice(i * columns, i * columns + columns);
-  }
+const RecipeCard = ({ recipe }: any) => {
+  const { _id, userId, title, categories, author, image } = recipe;
+
+  const goToRecipeDetails = () => {
+    router.push({
+      pathname: "/recent_view_recipe",
+      params: {
+        _id: _id,
+      },
+    });
+  };
 
   return (
-    <View style={styles.RecentContainer}>
-      <Text style={styles.RecentTitle}>Recent Recipe</Text>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          gap: 15,
-          marginTop: 15,
-          paddingLeft: 15,
-          paddingRight: 15,
-          // paddingBottom: 15,
-          alignItems: "center",
-        }}
-        alwaysBounceVertical={false}
-      >
-        {matrix.map((row, rowIndex) => (
-          <View key={rowIndex} style={{ flexDirection: "row", gap: 15 }}>
-            {row.map((item) => {
-              const {
-                id,
-                title,
-                category,
-                author,
-                img,
-              }: {
-                id: number;
-                title: string;
-                category: string;
-                author: string;
-                img: string;
-              } = item;
+    <Pressable onPress={goToRecipeDetails} style={styles.recipeContainer}>
+      <View style={styles.RecentTitleWrapper}>
+        <View style={styles.CategoriesContainer}>
+          {categories.map((cat: string, index: number) => {
+            return (
+              <View key={index} style={styles.RecentCategory}>
+                <Text style={styles.RecentCategoryTitle}>{cat}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.RecentDetails}>
+          <View style={styles.RecentDetailsContainer}>
+            <View style={{ width: 95 }}>
+              <Text numberOfLines={2} style={styles.RecentDetailsTitle}>
+                {title}
+              </Text>
+            </View>
+            <Ionicons name="ios-heart-outline" size={20} color="#FFFFFF" />
+          </View>
+          <View style={styles.RecentAdditionalInfo}>
+            <Text style={styles.RecentAdditionalInfoTitle}>
+              {`By ${author.name}`}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <Image style={styles.RecentRecipeImage} source={{ uri: image }} />
+    </Pressable>
+  );
+};
 
-              return (
-                <Pressable
-                  onPress={() => {
-                    router.push({
-                      pathname: "/view_recipe",
-                      params: {
-                        id: id,
-                        title: title,
-                        category: category,
-                        author: author,
-                        img: img,
-                      },
-                    });
-                  }}
-                  key={id}
-                  style={styles.RecentRecipeContainer}
-                >
-                  <View style={styles.RecentTitleWrapper}>
-                    <View style={styles.RecentCategory}>
-                      <Text style={styles.RecentCategoryTitle}>{category}</Text>
-                    </View>
-                    <View style={styles.RecentDetails}>
-                      <View style={styles.RecentDetailsContainer}>
-                        <View style={{ width: 95 }}>
-                          <Text
-                            numberOfLines={2}
-                            style={styles.RecentDetailsTitle}
-                          >
-                            {title}
-                          </Text>
-                        </View>
-                        <Ionicons
-                          name="ios-heart-outline"
-                          size={20}
-                          color="#FFFFFF"
-                        />
-                      </View>
-                      <View style={styles.RecentAdditionalInfo}>
-                        <Text style={styles.RecentAdditionalInfoTitle}>
-                          {`By ${author}`}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Image
-                    style={styles.RecentRecipeImage}
-                    source={{ uri: "https://" + img }}
-                  />
-                </Pressable>
-              );
-            })}
-            {/* Show empty space for last row if necessary */}
+const RecentRecipe = () => {
+  const { RecentRecipe, fetchRecentRecipe } = useAuth();
+
+  useEffect(() => {
+    fetchRecentRecipe();
+  }, []);
+
+  const columns = 2;
+  const matrix = Array.from(
+    { length: Math.ceil(RecentRecipe.length / columns) },
+    (_, rowIndex) =>
+      RecentRecipe.slice(rowIndex * columns, rowIndex * columns + columns)
+  );
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Recent Recipe</Text>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {matrix.map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.row}>
+            {row.map((item) => (
+              <RecipeCard key={item._id} recipe={item} />
+            ))}
             {row.length < columns &&
               Array.from(Array(columns - row.length).keys()).map((i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 165,
-                    height: 236,
-                  }}
-                ></View>
+                <View key={i} style={styles.emptyColumn}></View>
               ))}
           </View>
         ))}
@@ -121,15 +90,13 @@ const RecentRecipe = () => {
   );
 };
 
-export default memo(RecentRecipe);
-
 const styles = StyleSheet.create({
-  RecentContainer: {
+  container: {
     backgroundColor: "#FFFFFF",
     paddingBottom: 15,
     paddingTop: 15,
   },
-  RecentRecipeContainer: {
+  recipeContainer: {
     position: "relative",
   },
   RecentRecipeImage: {
@@ -137,6 +104,11 @@ const styles = StyleSheet.create({
     height: 236,
     resizeMode: "cover",
     borderRadius: 10,
+  },
+  CategoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
   },
   RecentTitleWrapper: {
     position: "absolute",
@@ -185,9 +157,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  RecentTitle: {
+  title: {
     fontSize: 16,
     fontWeight: "500",
     paddingLeft: 15,
   },
+  emptyColumn: {
+    width: 165,
+    height: 236,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    gap: 15,
+    marginTop: 15,
+    paddingLeft: 15,
+    paddingRight: 15,
+    alignItems: "center",
+  },
+  row: { flexDirection: "row", gap: 15 },
 });
+
+export default memo(RecentRecipe);

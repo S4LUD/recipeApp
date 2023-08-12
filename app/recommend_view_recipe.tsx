@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from "react";
+import React, { memo } from "react";
 import {
   View,
   Image,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Animated,
   Platform,
+  Pressable,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import LetterProfile from "@/components/LetterProfile";
@@ -15,10 +16,10 @@ import { useAuth } from "@/context/auth";
 
 const Viewer = () => {
   const params = useLocalSearchParams();
+  const { user, RecommendFood, addToFavorites, deleteToFavorites } = useAuth();
   const { _id } = params as any;
-  const { MyRecipe, triggerUpdateRecipeID } = useAuth();
 
-  const recipe = MyRecipe.filter((item: any) => {
+  const recipe = RecommendFood.filter((item: any) => {
     return item._id === _id;
   });
 
@@ -28,9 +29,9 @@ const Viewer = () => {
       (a: { number: number }, b: { number: number }) => a.number - b.number
     );
 
-  useEffect(() => {
-    triggerUpdateRecipeID(_id);
-  });
+  const ToFavotites = () => {
+    addToFavorites(_id);
+  };
 
   return (
     <ScrollView
@@ -38,33 +39,58 @@ const Viewer = () => {
       showsVerticalScrollIndicator={false}
       bounces={false}
     >
-      <Image style={styles.foodImage} source={{ uri: recipe[0].image }} />
+      <Image style={styles.foodImage} source={{ uri: recipe[0]?.image }} />
       <View style={styles.content}>
-        <Text style={styles.title}>{recipe[0].title}</Text>
+        <Text style={styles.title}>{recipe[0]?.title}</Text>
+        {user?._id === recipe[0].userId ? undefined : user?.favorites_id[0]
+            ?._id === recipe[0]._id ? (
+          <Pressable
+            onPressIn={() => deleteToFavorites(recipe[0]._id)}
+            style={{
+              marginVertical: 15,
+              backgroundColor: "#C70039",
+              paddingVertical: 5,
+              borderRadius: 10,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 16 }}>
+              Remove to your favorites
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPressIn={() => ToFavotites()}
+            style={{
+              marginVertical: 15,
+              backgroundColor: "#FFB07F",
+              paddingVertical: 5,
+              borderRadius: 10,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 16 }}>
+              Add to favorites
+            </Text>
+          </Pressable>
+        )}
         <View style={styles.userContent}>
-          {recipe[0].author.image ? (
-            <Image
-              source={{ uri: recipe[0].author.image }}
-              style={{ height: 50, width: 50, borderRadius: 50 }}
-            />
-          ) : (
-            <LetterProfile
-              name={recipe[0].author.name}
-              size={50}
-              fontSize={16}
-              backgroundColor="#D4E2D4"
-              textColor="#000000"
-            />
-          )}
+          <LetterProfile
+            name={recipe[0]?.author.name}
+            size={50}
+            fontSize={16}
+            backgroundColor="#D4E2D4"
+            textColor="#000000"
+          />
           <View style={styles.userInfo}>
-            <Text>{recipe[0].author.name}</Text>
-            <Text>@{recipe[0].author.username}</Text>
+            <Text>{recipe[0]?.author.name}</Text>
+            <Text>@{recipe[0]?.author.username}</Text>
           </View>
         </View>
         <View style={styles.detailsContent}>
-          <ShowMoreText fontSize={16} text={recipe[0].info} maxLength={100} />
+          <ShowMoreText fontSize={16} text={recipe[0]?.info} maxLength={100} />
         </View>
-        <View style={{ marginTop: 15 }}>
+        <View>
           <Text style={{ fontSize: 22, fontWeight: "500", paddingBottom: 20 }}>
             Ingredients
           </Text>
@@ -165,6 +191,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   ingredientText: {
+    fontSize: 16,
     paddingVertical: 5,
   },
   separator: {

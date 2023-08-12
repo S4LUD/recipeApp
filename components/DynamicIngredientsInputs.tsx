@@ -20,6 +20,14 @@ interface DynamicInputsProps {
   onDataChanged: (data: IngredientsInputValue[]) => void;
 }
 
+// Import icon names from a separate module
+import {
+  ICON_SECTION,
+  ICON_INGREDIENT,
+  ICON_ADD,
+  ICON_DELETE,
+} from "@/constants/iconNames";
+
 const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
   initialValues = [],
   onDataChanged,
@@ -76,10 +84,10 @@ const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
       </View>
       {inputValues.map((input, index) => (
         <View key={index} style={styles.inputContainer}>
-          <View style={{ paddingTop: 20 }}>
+          <View style={styles.iconContainer}>
             <Ionicons
               color="#D8D8D8"
-              name={input.isSection ? "chevron-forward-outline" : "menu-sharp"}
+              name={input.isSection ? ICON_SECTION : ICON_INGREDIENT}
               size={20}
             />
           </View>
@@ -109,46 +117,32 @@ const DynamicIngredientsInputs: React.FC<DynamicInputsProps> = ({
               {focusedIndex === index && `${input.value.length} / 200`}
             </Text>
           </View>
-          <View style={{ paddingTop: 20 }}>
+          <View style={styles.iconContainer}>
             <Pressable onPress={() => handleRemoveInput(index)}>
-              <Ionicons color="#D8D8D8" name="trash-outline" size={20} />
+              <Ionicons color="#D8D8D8" name="menu-sharp" size={20} />
             </Pressable>
           </View>
         </View>
       ))}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <View style={{ flex: 1 }}>
+      <View style={styles.buttonRow}>
+        <View style={styles.buttonContainer}>
           <Pressable
-            style={{
-              flexDirection: "row",
-              gap: 5,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={styles.button}
             onPress={handleAddSection}
+            accessibilityLabel="Add Section"
           >
-            <Ionicons name="add-outline" size={24} />
-            <Text style={{ fontSize: 16 }}>Section</Text>
+            <Ionicons name={ICON_ADD} size={24} />
+            <Text style={styles.buttonLabel}>Section</Text>
           </Pressable>
         </View>
         <View style={{ flex: 1 }}>
           <Pressable
-            style={{
-              flexDirection: "row",
-              gap: 5,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={styles.button}
             onPress={handleAddInput}
+            accessibilityLabel="Add Ingredient"
           >
-            <Ionicons name="add-outline" size={24} />
-            <Text style={{ fontSize: 16 }}>Ingredient</Text>
+            <Ionicons name={ICON_ADD} size={24} />
+            <Text style={styles.buttonLabel}>Ingredient</Text>
           </Pressable>
         </View>
       </View>
@@ -162,6 +156,26 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 10,
     gap: 10,
+  },
+  iconContainer: {
+    paddingTop: 20,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonContainer: {
+    flex: 1,
+  },
+  button: {
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonLabel: {
+    fontSize: 16,
   },
 });
 

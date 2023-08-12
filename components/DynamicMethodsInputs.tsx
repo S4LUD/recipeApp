@@ -28,10 +28,34 @@ export interface MethodsInputValue {
   images?: ImageInterface;
 }
 
+interface ImageSelectionProps {
+  image?: ImageInterface; // Make the image prop optional
+  onImageSelected: () => void;
+}
+
 interface DynamicInputsProps {
   initialValues?: MethodsInputValue[];
   onDataChanged: (data: MethodsInputValue[]) => void;
 }
+
+const ImageSelection: React.FC<ImageSelectionProps> = ({
+  image,
+  onImageSelected,
+}) => {
+  return (
+    <View style={styles.imageContainer}>
+      {image?.uri ? (
+        <Pressable onPress={onImageSelected}>
+          <Image source={{ uri: image?.uri }} style={styles.selectedImage} />
+        </Pressable>
+      ) : (
+        <Pressable onPress={onImageSelected} style={styles.imagePlaceholder}>
+          <Ionicons name="images-outline" size={30} color="#D8D8D8" />
+        </Pressable>
+      )}
+    </View>
+  );
+};
 
 const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
   initialValues = [],
@@ -117,14 +141,12 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
       </View>
       {inputValues.map((input, index) => (
         <View key={input.id} style={styles.inputContainer}>
-          <View style={{ paddingTop: 15 }}>
+          <View style={styles.methodIconContainer}>
             <Ionicons color="#D8D8D8" name="menu-sharp" size={20} />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.methodTextInputContainer}>
             <TextInput
-              style={{
-                backgroundColor: "#F0F2F5",
-              }}
+              style={styles.methodTextInput}
               value={input.value}
               onChangeText={(text) => handleInputChange(text, index)}
               placeholder="Heat oil in a cooking pot."
@@ -140,56 +162,24 @@ const DynamicMethodsInputs: React.FC<DynamicInputsProps> = ({
               keyboardAppearance="light"
               blurOnSubmit={true}
             />
-            <View
-              style={{
-                alignItems: "flex-start",
-                marginTop: 6,
-                flexDirection: "row",
-                gap: 6,
-              }}
-            >
-              {input.images?.uri ? (
-                <Pressable key={index} onPress={() => pickImage(input.id)}>
-                  <Image
-                    source={{
-                      uri: input.images?.uri,
-                    }}
-                    style={{ height: 85, width: 85, borderRadius: 5 }}
-                  />
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={() => pickImage(input.id)}
-                  style={{
-                    padding: 25,
-                    backgroundColor: "#F0F2F5",
-                    borderRadius: 5,
-                  }}
-                >
-                  <Ionicons name="images-outline" size={30} color="#D8D8D8" />
-                </Pressable>
-              )}
+            <View style={styles.imageSelectionContainer}>
+              <ImageSelection
+                image={input.images}
+                onImageSelected={() => pickImage(input.id)}
+              />
             </View>
           </View>
-          <View style={{ paddingTop: 15 }}>
+          <View style={styles.methodIconContainer}>
             <Pressable onPress={() => handleRemoveInput(index)}>
               <Ionicons color="#D8D8D8" name="trash-outline" size={20} />
             </Pressable>
           </View>
         </View>
       ))}
-      <View style={{ alignItems: "center" }}>
-        <Pressable
-          style={{
-            flexDirection: "row",
-            gap: 5,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onPress={handleAddInput}
-        >
+      <View style={styles.addStepButtonContainer}>
+        <Pressable style={styles.addStepButton} onPress={handleAddInput}>
           <Ionicons name="add-outline" size={24} />
-          <Text style={{ fontSize: 16 }}>Steps</Text>
+          <Text style={styles.addStepButtonText}>Steps</Text>
         </Pressable>
       </View>
     </View>
@@ -202,6 +192,46 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 10,
     gap: 10,
+  },
+  imageContainer: {
+    alignItems: "flex-start",
+    marginTop: 6,
+    flexDirection: "row",
+    gap: 6,
+  },
+  selectedImage: {
+    height: 85,
+    width: 85,
+    borderRadius: 5,
+  },
+  imagePlaceholder: {
+    padding: 25,
+    backgroundColor: "#F0F2F5",
+    borderRadius: 5,
+  },
+  imageSelectionContainer: {
+    flex: 1,
+  },
+  addStepButtonText: {
+    fontSize: 16,
+  },
+  addStepButton: {
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addStepButtonContainer: {
+    alignItems: "center",
+  },
+  methodIconContainer: {
+    paddingTop: 15,
+  },
+  methodTextInput: {
+    backgroundColor: "#F0F2F5",
+  },
+  methodTextInputContainer: {
+    flex: 1,
   },
 });
 

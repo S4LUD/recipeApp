@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from "react";
+import React, { memo, useCallback, useEffect } from "react";
 import {
   Text,
   View,
@@ -7,12 +7,55 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
 
+const RecipeCard = ({ recipe }: any) => {
+  const { _id, title, categories, author, image } = recipe;
+
+  const goToRecipeDetails = useCallback(() => {
+    router.push({
+      pathname: "/recommend_view_recipe",
+      params: {
+        _id: _id,
+      },
+    });
+  }, [_id]);
+
+  return (
+    <Pressable onPress={goToRecipeDetails} style={styles.recipeContainer}>
+      <View style={styles.titleWrapper}>
+        <View style={styles.categoriesContainer}>
+          {categories.map((cat: string, index: number) => {
+            return (
+              <View key={index} style={styles.category}>
+                <Text style={styles.categoryTitle}>{cat}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.details}>
+          <View style={styles.detailsContainer}>
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={2} style={styles.detailsTitle}>
+                {title}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.additionalInfo}>
+            <Text style={styles.additionalInfoTitle}>
+              {`By ${author?.name}`}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <Image style={styles.recipeImage} source={{ uri: image }} />
+    </Pressable>
+  );
+};
+
 const RecommendView = () => {
-  const { user, RecommendFood, fetchRecommendation } = useAuth();
+  const { RecommendFood, fetchRecommendation } = useAuth();
 
   const filterByCat = [
     "Breakfast",
@@ -29,13 +72,13 @@ const RecommendView = () => {
   }, []);
 
   return (
-    <View style={styles.RecommendContainer}>
-      <Text style={styles.RecommendTitle}>Recommendation</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Recommendation</Text>
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 10, paddingHorizontal: 15 }}
-        style={{ marginTop: 10 }}
+        style={styles.categoryScrollView}
       >
         {filterByCat.map((item, index) => {
           return (
@@ -47,7 +90,7 @@ const RecommendView = () => {
                 })
               }
               key={index}
-              style={styles.CategoryButton}
+              style={styles.categoryButton}
             >
               <Text>{item}</Text>
             </Pressable>
@@ -55,115 +98,53 @@ const RecommendView = () => {
         })}
       </ScrollView>
       <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          gap: 15,
-          marginTop: 15,
-          paddingLeft: 15,
-          paddingRight: 15,
-        }}
+        contentContainerStyle={styles.recipeScrollViewContent}
         horizontal={true}
         showsHorizontalScrollIndicator={false}
       >
-        {RecommendFood.map((item) => {
-          const { _id, userId, title, categories, author, image } = item;
-          return (
-            <Pressable
-              onPress={() => {
-                router.push({
-                  pathname: "/view_recipe",
-                  params: {
-                    _id: _id,
-                  },
-                });
-              }}
-              key={_id}
-              style={styles.RecommendRecipeContainer}
-            >
-              <View style={styles.RecommendTitleWrapper}>
-                <View style={styles.CategoriesContainer}>
-                  {categories.map((cat: string, index: number) => {
-                    return (
-                      <View key={index} style={styles.RecipesCategory}>
-                        <Text style={styles.RecipesCategoryTitle}>{cat}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-                <View style={styles.RecommendDetails}>
-                  <View style={styles.RecommendDetailsContainer}>
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        numberOfLines={2}
-                        style={styles.RecommendDetailsTitle}
-                      >
-                        {title}
-                      </Text>
-                    </View>
-                    {user?._id !== userId && (
-                      <Ionicons
-                        name="ios-heart-outline"
-                        size={20}
-                        color="#FFFFFF"
-                      />
-                    )}
-                  </View>
-                  <View style={styles.RecommendAdditionalInfo}>
-                    <Text style={styles.RecommendAdditionalInfoTitle}>
-                      {`By ${author?.name}`}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <Image
-                style={styles.RecommendRecipeImage}
-                source={{ uri: image }}
-              />
-            </Pressable>
-          );
-        })}
+        {RecommendFood.map((item) => (
+          <RecipeCard key={item._id} recipe={item} />
+        ))}
       </ScrollView>
     </View>
   );
 };
 
-export default memo(RecommendView);
-
 const styles = StyleSheet.create({
-  RecommendContainer: {
+  container: {
     marginTop: 10,
     backgroundColor: "#FFFFFF",
     paddingBottom: 15,
     paddingTop: 15,
   },
-  CategoriesContainer: {
+  categoriesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 5,
   },
-  RecipesCategory: {
+  category: {
     backgroundColor: "rgba(0, 0, 0, 0.60)",
     borderRadius: 5,
     paddingHorizontal: 5,
     paddingVertical: 3,
     alignSelf: "flex-start",
   },
-  RecipesCategoryTitle: {
+  categoryTitle: {
     textTransform: "capitalize",
     color: "white",
     fontSize: 10,
     fontWeight: "500",
   },
-  RecommendRecipeContainer: {
+  recipeContainer: {
     position: "relative",
   },
-  RecommendRecipeImage: {
+  recipeImage: {
     width: 150,
     height: 215,
     resizeMode: "cover",
     borderRadius: 10,
   },
-  RecommendTitleWrapper: {
+  titleWrapper: {
     position: "absolute",
     zIndex: 1,
     top: 0,
@@ -173,20 +154,7 @@ const styles = StyleSheet.create({
     margin: 10,
     justifyContent: "space-between",
   },
-  RecommendCategory: {
-    backgroundColor: "rgba(0, 0, 0, 0.60)",
-    borderRadius: 5,
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    alignSelf: "flex-start",
-  },
-  RecommendCategoryTitle: {
-    textTransform: "capitalize",
-    color: "white",
-    fontSize: 10,
-    fontWeight: "500",
-  },
-  RecommendDetails: {
+  details: {
     backgroundColor: "rgba(69, 69, 69, 0.30)",
     borderRadius: 5,
     paddingHorizontal: 5,
@@ -194,31 +162,41 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: "space-between",
   },
-  RecommendDetailsTitle: {
+  detailsTitle: {
     color: "white",
     fontSize: 12,
     fontWeight: "600",
   },
-  RecommendAdditionalInfo: {
+  additionalInfo: {
     flexDirection: "row",
   },
-  RecommendAdditionalInfoTitle: {
+  additionalInfoTitle: {
     color: "#D8D8D8",
     fontSize: 10,
   },
-  RecommendDetailsContainer: {
+  detailsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  RecommendTitle: {
+  title: {
     fontSize: 16,
     fontWeight: "500",
     paddingLeft: 15,
   },
-  CategoryButton: {
+  categoryButton: {
     backgroundColor: "#F0F2F5",
     borderRadius: 5,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
+  categoryScrollView: { marginTop: 10 },
+  recipeScrollViewContent: {
+    flexGrow: 1,
+    gap: 15,
+    marginTop: 15,
+    paddingLeft: 15,
+    paddingRight: 15,
+  },
 });
+
+export default memo(RecommendView);

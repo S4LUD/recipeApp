@@ -1,7 +1,6 @@
 import React from "react";
 import { Stack, router } from "expo-router";
 import { Pressable, Text, View, useColorScheme, Keyboard } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/context/auth";
 
@@ -76,14 +75,21 @@ export default function RootLayoutNav() {
         }}
       />
       <Stack.Screen
-        name="view_recipe"
+        name="recommend_view_recipe"
         options={{
           title: "",
-          headerRight: () => (
-            <Pressable onPress={() => console.log("Pressed")}>
-              <Ionicons name="ios-heart-outline" size={24} />
-            </Pressable>
-          ),
+        }}
+      />
+      <Stack.Screen
+        name="recent_view_recipe"
+        options={{
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="trend_view_recipe"
+        options={{
+          title: "",
         }}
       />
       <Stack.Screen
@@ -169,6 +175,12 @@ export default function RootLayoutNav() {
               </Pressable>
             </View>
           ),
+        }}
+      />
+      <Stack.Screen
+        name="view_favorite_recipe"
+        options={{
+          title: "",
         }}
       />
       <Stack.Screen

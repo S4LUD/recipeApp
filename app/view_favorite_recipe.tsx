@@ -7,6 +7,7 @@ import {
   ScrollView,
   Animated,
   Platform,
+  Pressable,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import LetterProfile from "@/components/LetterProfile";
@@ -16,9 +17,9 @@ import { useAuth } from "@/context/auth";
 const Viewer = () => {
   const params = useLocalSearchParams();
   const { _id } = params as any;
-  const { MyRecipe, triggerUpdateRecipeID } = useAuth();
+  const { MyFavorites, deleteToFavorites } = useAuth();
 
-  const recipe = MyRecipe.filter((item: any) => {
+  const recipe = MyFavorites.filter((item: any) => {
     return item._id === _id;
   });
 
@@ -27,10 +28,6 @@ const Viewer = () => {
     .sort(
       (a: { number: number }, b: { number: number }) => a.number - b.number
     );
-
-  useEffect(() => {
-    triggerUpdateRecipeID(_id);
-  });
 
   return (
     <ScrollView
@@ -41,6 +38,20 @@ const Viewer = () => {
       <Image style={styles.foodImage} source={{ uri: recipe[0].image }} />
       <View style={styles.content}>
         <Text style={styles.title}>{recipe[0].title}</Text>
+        <Pressable
+          onPressIn={() => deleteToFavorites(recipe[0]._id)}
+          style={{
+            marginVertical: 15,
+            backgroundColor: "#C70039",
+            paddingVertical: 5,
+            borderRadius: 10,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "white", fontSize: 16 }}>
+            Remove to your favorites
+          </Text>
+        </Pressable>
         <View style={styles.userContent}>
           {recipe[0].author.image ? (
             <Image

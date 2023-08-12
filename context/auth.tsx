@@ -1,4 +1,9 @@
-import { router, useSegments, useRootNavigation } from "expo-router";
+import {
+  router,
+  useSegments,
+  useRootNavigation,
+  usePathname,
+} from "expo-router";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import * as SecureStore from "expo-secure-store";
@@ -19,6 +24,8 @@ export interface User {
   bio?: string | null;
   image?: string | null;
   image_public_id?: string | null;
+  favorites_id?: any;
+  recipe_id?: any;
 }
 
 interface createRecipe {
@@ -92,13 +99,20 @@ interface AuthContextValue {
   ) => void;
   triggerCreateRecipe: triggerCreate;
   SaveCreatedRecipe: () => void;
-  MyPersonalRecipes: () => void;
-  myRecipes: any;
   triggerUpdateRecipeID: (_id: string) => void;
   GotoUpdateRecipeScreen: () => void;
   DeleteRecipe: () => void;
   fetchRecommendation: () => void;
   RecommendFood: any[];
+  addToFavorites: (_id: string) => void;
+  deleteToFavorites: (_id: string) => void;
+  fetchUserData: () => void;
+  fetchTopRecipe: () => void;
+  TopRecipe: any[];
+  fetchRecentRecipe: () => void;
+  RecentRecipe: any[];
+  MyRecipe: any[];
+  MyFavorites: any[];
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -130,11 +144,63 @@ export function AuthProvider({
   const [triggerCreateRecipe, setTriggerCreateRecipe] = useState<triggerCreate>(
     {}
   );
-  const [myRecipes, setMyRecipes] = useState<any>([]);
   const [updateRecipe, setUpdateRecipe] = useState<string>("");
   const [RecommendFood, setRecommendFood] = useState<any[]>([]);
+  const [TopRecipe, setTopRecipe] = useState<any[]>([]);
+  const [RecentRecipe, setRecentRecipe] = useState<any[]>([]);
+  const [MyRecipe, setMyRecipe] = useState<any[]>([]);
+  const [MyFavorites, setMyFavorites] = useState<any[]>([]);
+  const pathname = usePathname();
 
-  const fetchRecommendation = async () => {
+  async function fetchRecentRecipe() {
+    const storedToken = await SecureStore.getItemAsync("token");
+
+    if (storedToken) {
+      await axios
+        .request({
+          method: "get",
+          maxBodyLength: Infinity,
+          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/recent/recipe`,
+          headers: {
+            authorization_r: `Bearer ${storedToken}`,
+          },
+        })
+        .then((response) => {
+          if (response.data.status) {
+            setRecentRecipe(response.data.mostRecentRecipe);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }
+
+  async function fetchTopRecipe() {
+    const storedToken = await SecureStore.getItemAsync("token");
+
+    if (storedToken) {
+      await axios
+        .request({
+          method: "get",
+          maxBodyLength: Infinity,
+          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/best/recipe`,
+          headers: {
+            authorization_r: `Bearer ${storedToken}`,
+          },
+        })
+        .then((response) => {
+          if (response.data.status) {
+            setTopRecipe(response.data.topLikedRecipes);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }
+
+  async function fetchRecommendation() {
     try {
       const storedToken = await SecureStore.getItemAsync("token");
 
@@ -155,7 +221,7 @@ export function AuthProvider({
     } catch (error) {
       console.log(error);
     }
-  };
+  }
 
   async function getUserProfile(token: string) {
     try {
@@ -173,6 +239,161 @@ export function AuthProvider({
       // Handle API error
       console.log("Error fetching user profile:", error);
       throw error;
+    }
+  }
+
+  async function fetchUserData() {
+    const storedToken = await SecureStore.getItemAsync("token");
+    if (storedToken) {
+      const userProfile = await getUserProfile(storedToken);
+
+      const {
+        _id,
+        username,
+        firstName,
+        lastName,
+        bio,
+        image,
+        image_public_id,
+        favorites_id,
+        recipe_id,
+      } = userProfile;
+
+      // Set user data
+      setMyRecipe(recipe_id);
+      setMyFavorites(favorites_id);
+      setAuth({
+        _id,
+        username,
+        firstName,
+        lastName,
+        bio,
+        image,
+        image_public_id,
+      });
+    }
+  }
+
+  async function deleteToFavorites(_id: string) {
+    const storedToken = await SecureStore.getItemAsync("token");
+    if (storedToken) {
+      try {
+        await axios
+          .request({
+            method: "patch",
+            maxBodyLength: Infinity,
+            url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/remove/favorites`,
+            headers: {
+              authorization_r: `Bearer ${storedToken}`,
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+              _id: _id,
+            }),
+          })
+          .then(async (response) => {
+            if (response.data.status) {
+              if (pathname === "/profile/favorite") {
+                router.back();
+              }
+
+              // If verification succeeds, get the user profile
+              const userProfile = await getUserProfile(storedToken);
+
+              const {
+                _id,
+                username,
+                firstName,
+                lastName,
+                bio,
+                image,
+                image_public_id,
+                favorites_id,
+                recipe_id,
+              } = userProfile;
+
+              // Set user data
+              setMyRecipe(recipe_id);
+              setMyFavorites(favorites_id);
+              setAuth({
+                _id,
+                username,
+                firstName,
+                lastName,
+                bio,
+                image,
+                image_public_id,
+              });
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } catch (error) {
+        // Handle API error
+        console.log("Error fetching user profile:", error);
+        throw error;
+      }
+    }
+  }
+
+  async function addToFavorites(_id: string) {
+    const storedToken = await SecureStore.getItemAsync("token");
+
+    if (storedToken) {
+      try {
+        await axios
+          .request({
+            method: "patch",
+            maxBodyLength: Infinity,
+            url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/add/favorites`,
+            headers: {
+              authorization_r: `Bearer ${storedToken}`,
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+              _id: _id,
+            }),
+          })
+          .then(async (response) => {
+            if (response.data.status) {
+              // If verification succeeds, get the user profile
+              const userProfile = await getUserProfile(storedToken);
+
+              const {
+                _id,
+                username,
+                firstName,
+                lastName,
+                bio,
+                image,
+                image_public_id,
+                favorites_id,
+                recipe_id,
+              } = userProfile;
+
+              // Set user data
+              setMyRecipe(recipe_id);
+              setMyFavorites(favorites_id);
+              setAuth({
+                _id,
+                username,
+                firstName,
+                lastName,
+                bio,
+                image,
+                image_public_id,
+              });
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } catch (error) {
+        // Handle API error
+        console.log("Error fetching user profile:", error);
+        throw error;
+      }
     }
   }
 
@@ -204,9 +425,13 @@ export function AuthProvider({
             bio,
             image,
             image_public_id,
+            favorites_id,
+            recipe_id,
           } = userProfile;
 
           // Set user data
+          setMyRecipe(recipe_id);
+          setMyFavorites(favorites_id);
           setAuth({
             _id,
             username,
@@ -315,6 +540,7 @@ export function AuthProvider({
           bio,
           image,
           image_public_id,
+          favorites_id,
         } = userProfile;
 
         // Set user data
@@ -326,6 +552,7 @@ export function AuthProvider({
           bio,
           image,
           image_public_id,
+          favorites_id,
         });
 
         await save("token", response.headers.token);
@@ -456,6 +683,7 @@ export function AuthProvider({
         bio,
         image,
         image_public_id,
+        favorites_id,
       } = userProfile;
 
       // Set user data
@@ -467,6 +695,7 @@ export function AuthProvider({
         bio,
         image,
         image_public_id,
+        favorites_id,
       });
     } catch (error) {
       console.error("Error updating user profile:", error);
@@ -607,6 +836,7 @@ export function AuthProvider({
       categories,
       methods || []
     );
+    await fetchRecentRecipe();
   };
 
   const createRecipes = async (
@@ -741,36 +971,39 @@ export function AuthProvider({
       });
 
       if (result.data.status) {
-        MyPersonalRecipes();
+        const userProfile = await getUserProfile(storedToken);
+
+        const {
+          _id,
+          username,
+          firstName,
+          lastName,
+          bio,
+          image,
+          image_public_id,
+          favorites_id,
+          recipe_id,
+        } = userProfile;
+
+        // Set user data
+        setMyRecipe(recipe_id);
+        setMyFavorites(favorites_id);
+        setAuth({
+          _id,
+          username,
+          firstName,
+          lastName,
+          bio,
+          image,
+          image_public_id,
+        });
+
         setCreateRecipeStatus(false);
         router.back();
       }
     }
     setCreateRecipeStatus(false);
   }
-
-  const MyPersonalRecipes = async () => {
-    try {
-      const storedToken = await SecureStore.getItemAsync("token");
-
-      if (storedToken) {
-        const response = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/api/user/recipes`,
-          {
-            headers: {
-              authorization_r: `Bearer ${storedToken}`,
-            },
-          }
-        );
-
-        if (response.data) {
-          setMyRecipes(response.data);
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const DeleteRecipe = async () => {
     try {
@@ -801,9 +1034,35 @@ export function AuthProvider({
                       _id: updateRecipe,
                     }),
                   })
-                  .then((response) => {
+                  .then(async (response) => {
                     if (response.data) {
-                      MyPersonalRecipes();
+                      const userProfile = await getUserProfile(storedToken);
+
+                      const {
+                        _id,
+                        username,
+                        firstName,
+                        lastName,
+                        bio,
+                        image,
+                        image_public_id,
+                        favorites_id,
+                        recipe_id,
+                      } = userProfile;
+
+                      // Set user data
+                      setMyRecipe(recipe_id);
+                      setMyFavorites(favorites_id);
+                      setAuth({
+                        _id,
+                        username,
+                        firstName,
+                        lastName,
+                        bio,
+                        image,
+                        image_public_id,
+                      });
+
                       router.back();
                     }
                   })
@@ -846,13 +1105,20 @@ export function AuthProvider({
         SaveCreatedRecipe,
         triggerCreateRecipe,
         createRecipeStatus,
-        MyPersonalRecipes,
-        myRecipes,
         triggerUpdateRecipeID: (_id: string) => triggerUpdateRecipeID(_id),
         GotoUpdateRecipeScreen,
         DeleteRecipe,
         fetchRecommendation,
         RecommendFood,
+        addToFavorites,
+        deleteToFavorites,
+        fetchUserData,
+        fetchTopRecipe,
+        TopRecipe,
+        fetchRecentRecipe,
+        RecentRecipe,
+        MyRecipe,
+        MyFavorites,
       }}
     >
       {children}

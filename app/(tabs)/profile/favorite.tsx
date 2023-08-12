@@ -3,26 +3,82 @@ import {
   Text,
   View,
   Image,
-  ScrollView,
+  FlatList,
   Pressable,
+  RefreshControl,
 } from "react-native";
-import { RecommendFood } from "@/util/tempData";
-import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useAuth } from "@/context/auth";
+import { useState, useCallback } from "react";
+
+const RecipeItem = ({ item }: any) => {
+  const { _id, title, categories, image } = item;
+
+  const goToRecipeDetails = () => {
+    router.push({
+      pathname: "/view_favorite_recipe",
+      params: { _id: _id },
+    });
+  };
+
+  return (
+    <Pressable key={_id} onPress={() => goToRecipeDetails()}>
+      <View style={styles.RecipesTitleWrapper}>
+        <View style={styles.CategoriesContainer}>
+          {categories.map((cat: any, index: number) => {
+            return (
+              <View key={index} style={styles.RecipesCategory}>
+                <Text style={styles.RecipesCategoryTitle}>{cat}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.RecipesDetails}>
+          <View style={styles.RecipesDetailsContainer}>
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={3} style={styles.RecipesDetailsTitle}>
+                {title}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <Image style={styles.RecipesRecipeImage} source={{ uri: image }} />
+    </Pressable>
+  );
+};
 
 export default function Favorite() {
-  // Calculate number of columns and rows
-  const columns = 2;
-  const rows = Math.ceil(RecommendFood.length / columns);
-  const matrix = [];
-  for (let i = 0; i < rows; i++) {
-    matrix[i] = RecommendFood.slice(i * columns, i * columns + columns);
-  }
+  const { MyFavorites, fetchUserData } = useAuth();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const empty = true;
+  const columns = 2;
+
+  const renderRecipeItem = ({ item }: any) => {
+    return <RecipeItem item={item} />;
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchUserData();
+    setRefreshing(false);
+  }, [fetchUserData]);
 
   return (
     <View style={styles.RecipesContainer}>
-      {empty ? (
+      {MyFavorites.length !== 0 ? (
+        <FlatList
+          data={MyFavorites}
+          keyExtractor={(item) => item._id}
+          numColumns={columns}
+          renderItem={renderRecipeItem}
+          contentContainerStyle={styles.scrollViewContent}
+          columnWrapperStyle={{ gap: 15 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      ) : (
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
@@ -30,78 +86,18 @@ export default function Favorite() {
             Empty favorites
           </Text>
         </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            gap: 15,
-            paddingLeft: 15,
-            paddingRight: 15,
-            paddingTop: 15,
-            paddingBottom: 15,
-            alignItems: "center",
-          }}
-          alwaysBounceVertical={false}
-        >
-          {matrix.map((row, rowIndex) => (
-            <View key={rowIndex} style={{ flexDirection: "row", gap: 15 }}>
-              {row.map((item) => (
-                <View key={item.id} style={styles.RecipesRecipeContainer}>
-                  <View style={styles.RecipesTitleWrapper}>
-                    <View style={styles.RecipesCategory}>
-                      <Text style={styles.RecipesCategoryTitle}>
-                        {item.category}
-                      </Text>
-                    </View>
-                    <View style={styles.RecipesDetails}>
-                      <View style={styles.RecipesDetailsContainer}>
-                        <View style={{ width: 95 }}>
-                          <Text
-                            numberOfLines={2}
-                            style={styles.RecipesDetailsTitle}
-                          >
-                            {item.title}
-                          </Text>
-                        </View>
-                        <Ionicons
-                          name="ios-ellipsis-vertical"
-                          size={20}
-                          color="white"
-                        />
-                      </View>
-                      <View style={styles.RecipesAdditionalInfo}>
-                        <Text style={styles.RecipesAdditionalInfoTitle}>
-                          {`By ${item.author}`}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Image
-                    style={styles.RecipesRecipeImage}
-                    source={{ uri: "https://" + item.img }}
-                  />
-                </View>
-              ))}
-              {/* Show empty space for last row if necessary */}
-              {row.length < columns &&
-                Array.from(Array(columns - row.length).keys()).map((i) => (
-                  <View
-                    key={i}
-                    style={{
-                      width: 165,
-                      height: 236,
-                    }}
-                  ></View>
-                ))}
-            </View>
-          ))}
-        </ScrollView>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollViewContent: {
+    flexGrow: 1,
+    gap: 15,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
   RecipesContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -124,6 +120,11 @@ const styles = StyleSheet.create({
     right: 0,
     margin: 10,
     justifyContent: "space-between",
+  },
+  CategoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
   },
   RecipesCategory: {
     backgroundColor: "rgba(0, 0, 0, 0.60)",

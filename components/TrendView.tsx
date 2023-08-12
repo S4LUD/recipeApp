@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback, useEffect } from "react";
 import {
   Text,
   View,
@@ -7,118 +7,93 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { TrendFood } from "@/util/tempData";
 import { router } from "expo-router";
+import { useAuth } from "@/context/auth";
+
+const RecipeCard = ({ recipe }: any) => {
+  const { _id, title, categories, author, image } = recipe;
+
+  const goToRecipeDetails = useCallback(() => {
+    router.push({
+      pathname: "/trend_view_recipe",
+      params: {
+        _id: _id,
+      },
+    });
+  }, [_id]);
+
+  return (
+    <Pressable onPress={goToRecipeDetails} style={styles.recipeContainer}>
+      <View style={styles.titleWrapper}>
+        <View style={styles.categoriesContainer}>
+          {categories.map((cat: string, index: number) => {
+            return (
+              <View key={index} style={styles.category}>
+                <Text style={styles.categoryTitle}>{cat}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.details}>
+          <View style={styles.detailsContainer}>
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={2} style={styles.detailsTitle}>
+                {title}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.additionalInfo}>
+            <Text style={styles.additionalInfoTitle}>
+              {`By ${author?.name}`}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <Image style={styles.recipeImage} source={{ uri: image }} />
+    </Pressable>
+  );
+};
 
 const TrendView = () => {
+  const { TopRecipe, fetchTopRecipe } = useAuth();
+
+  useEffect(() => {
+    fetchTopRecipe();
+  }, []);
+
   return (
-    <View style={HomeStyle.TrendingContainer}>
-      <Text style={HomeStyle.TrendingTitle}>Recipes of the week</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Recipes of the week</Text>
       <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          gap: 15,
-          marginTop: 15,
-          paddingLeft: 15,
-          paddingRight: 15,
-        }}
+        contentContainerStyle={styles.recipeScrollViewContent}
         horizontal={true}
         showsHorizontalScrollIndicator={false}
       >
-        {TrendFood.map((item) => {
-          const {
-            id,
-            title,
-            category,
-            author,
-            img,
-          }: {
-            id: number;
-            title: string;
-            category: string;
-            author: string;
-            img: string;
-          } = item;
-
-          return (
-            <Pressable
-              onPress={() => {
-                router.push({
-                  pathname: "/view_recipe",
-                  params: {
-                    id: id,
-                    title: title,
-                    category: category,
-                    author: author,
-                    img: img,
-                  },
-                });
-              }}
-              key={id}
-              style={HomeStyle.TrendingRecipeContainer}
-            >
-              <View style={HomeStyle.TrendingTitleWrapper}>
-                <View style={HomeStyle.TrendingCategory}>
-                  <Text style={HomeStyle.TrendingCategoryTitle}>
-                    {category}
-                  </Text>
-                </View>
-                <View style={HomeStyle.TrendingDetails}>
-                  <View style={HomeStyle.TrendingDetailsContainer}>
-                    <View style={{ width: 95 }}>
-                      <Text
-                        numberOfLines={2}
-                        style={HomeStyle.TrendingDetailsTitle}
-                      >
-                        {title}
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name="ios-heart-outline"
-                      size={20}
-                      color="#FFFFFF"
-                    />
-                  </View>
-                  <View style={HomeStyle.TrendingAdditionalInfo}>
-                    <Text style={HomeStyle.TrendingAdditionalInfoTitle}>
-                      {`By ${author}`}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <Image
-                style={HomeStyle.TrendingRecipeImage}
-                source={{ uri: "https://" + img }}
-              />
-            </Pressable>
-          );
-        })}
+        {TopRecipe.map((item) => (
+          <RecipeCard key={item._id} recipe={item} />
+        ))}
       </ScrollView>
     </View>
   );
 };
 
-export default memo(TrendView);
-
-const HomeStyle = StyleSheet.create({
-  TrendingContainer: {
+const styles = StyleSheet.create({
+  container: {
     marginTop: 10,
     backgroundColor: "#FFFFFF",
     paddingBottom: 15,
     paddingTop: 15,
-    marginBottom: 10,
   },
-  TrendingRecipeContainer: {
+  recipeContainer: {
     position: "relative",
   },
-  TrendingRecipeImage: {
+  recipeImage: {
     width: 188,
     height: 269,
     resizeMode: "cover",
     borderRadius: 10,
   },
-  TrendingTitleWrapper: {
+  titleWrapper: {
     position: "absolute",
     zIndex: 1,
     top: 0,
@@ -128,20 +103,25 @@ const HomeStyle = StyleSheet.create({
     margin: 10,
     justifyContent: "space-between",
   },
-  TrendingCategory: {
+  categoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+  },
+  category: {
     backgroundColor: "rgba(0, 0, 0, 0.60)",
     borderRadius: 5,
     paddingHorizontal: 5,
     paddingVertical: 3,
     alignSelf: "flex-start",
   },
-  TrendingCategoryTitle: {
+  categoryTitle: {
     textTransform: "capitalize",
     color: "white",
     fontSize: 10,
     fontWeight: "500",
   },
-  TrendingDetails: {
+  details: {
     backgroundColor: "rgba(69, 69, 69, 0.30)",
     borderRadius: 5,
     paddingHorizontal: 5,
@@ -149,25 +129,34 @@ const HomeStyle = StyleSheet.create({
     height: 60,
     justifyContent: "space-between",
   },
-  TrendingDetailsTitle: {
+  detailsTitle: {
     color: "white",
     fontSize: 12,
     fontWeight: "600",
   },
-  TrendingAdditionalInfo: {
+  additionalInfo: {
     flexDirection: "row",
   },
-  TrendingAdditionalInfoTitle: {
+  additionalInfoTitle: {
     color: "#D8D8D8",
     fontSize: 10,
   },
-  TrendingDetailsContainer: {
+  detailsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  TrendingTitle: {
+  title: {
     fontSize: 16,
     fontWeight: "500",
     paddingLeft: 15,
   },
+  recipeScrollViewContent: {
+    flexGrow: 1,
+    gap: 15,
+    marginTop: 15,
+    paddingLeft: 15,
+    paddingRight: 15,
+  },
 });
+
+export default memo(TrendView);

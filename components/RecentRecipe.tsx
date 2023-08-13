@@ -6,13 +6,17 @@ import {
   Image,
   ScrollView,
   Pressable,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
 
+const screenWidth = Dimensions.get("window").width;
+const cardWidth = (screenWidth - (2 - 1) * 45) / 2;
+
 const RecipeCard = ({ recipe }: any) => {
-  const { _id, userId, title, categories, author, image } = recipe;
+  const { _id, title, categories, author, image } = recipe;
 
   const goToRecipeDetails = () => {
     router.push({
@@ -24,7 +28,10 @@ const RecipeCard = ({ recipe }: any) => {
   };
 
   return (
-    <Pressable onPress={goToRecipeDetails} style={styles.recipeContainer}>
+    <Pressable
+      onPress={goToRecipeDetails}
+      style={[styles.recipeContainer, { width: cardWidth }]}
+    >
       <View style={styles.RecentTitleWrapper}>
         <View style={styles.CategoriesContainer}>
           {categories.map((cat: string, index: number) => {
@@ -37,12 +44,11 @@ const RecipeCard = ({ recipe }: any) => {
         </View>
         <View style={styles.RecentDetails}>
           <View style={styles.RecentDetailsContainer}>
-            <View style={{ width: 95 }}>
+            <View style={{ flex: 1 }}>
               <Text numberOfLines={2} style={styles.RecentDetailsTitle}>
                 {title}
               </Text>
             </View>
-            <Ionicons name="ios-heart-outline" size={20} color="#FFFFFF" />
           </View>
           <View style={styles.RecentAdditionalInfo}>
             <Text style={styles.RecentAdditionalInfoTitle}>
@@ -51,7 +57,10 @@ const RecipeCard = ({ recipe }: any) => {
           </View>
         </View>
       </View>
-      <Image style={styles.RecentRecipeImage} source={{ uri: image }} />
+      <Image
+        style={[styles.RecentRecipeImage, { width: cardWidth }]}
+        source={{ uri: image }}
+      />
     </Pressable>
   );
 };
@@ -73,7 +82,7 @@ const RecentRecipe = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Recent Recipe</Text>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <View style={styles.scrollViewContent}>
         {matrix.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {row.map((item) => (
@@ -85,7 +94,7 @@ const RecentRecipe = () => {
               ))}
           </View>
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -95,12 +104,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingBottom: 15,
     paddingTop: 15,
+    marginTop: 10,
   },
   recipeContainer: {
     position: "relative",
   },
   RecentRecipeImage: {
-    width: 165,
     height: 236,
     resizeMode: "cover",
     borderRadius: 10,
@@ -163,16 +172,13 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
   },
   emptyColumn: {
-    width: 165,
     height: 236,
   },
   scrollViewContent: {
-    flexGrow: 1,
+    flex: 1,
     gap: 15,
-    marginTop: 15,
-    paddingLeft: 15,
-    paddingRight: 15,
     alignItems: "center",
+    paddingTop: 15,
   },
   row: { flexDirection: "row", gap: 15 },
 });

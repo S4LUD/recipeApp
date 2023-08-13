@@ -46,8 +46,8 @@ const LoadingIndicator = () => (
 
 const Create = () => {
   const { _id }: { _id: string } = useLocalSearchParams();
-  const { triggerCreateRecipes, createRecipeStatus, myRecipes } = useAuth();
-  const recipe = myRecipes.filter((item: any) => {
+  const { triggerCreateRecipes, createRecipeStatus, MyRecipes } = useAuth();
+  const recipe = MyRecipes.filter((item: any) => {
     return item._id === _id;
   });
 

@@ -6,6 +6,7 @@ import {
   StatusBar,
   Pressable,
   Animated,
+  RefreshControl,
 } from "react-native";
 import { useColorScheme } from "react-native";
 import { memo } from "react";
@@ -16,13 +17,24 @@ import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/context/auth";
+import { useState, useCallback } from "react";
 
 const Index = ({}) => {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, fetchRecentRecipe, fetchTopRecipe, fetchRecommendation } =
+    useAuth();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const fullName: string = `${user?.firstName} ${user?.lastName}`;
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchRecentRecipe();
+    fetchTopRecipe();
+    fetchRecommendation();
+    setRefreshing(false);
+  }, [fetchRecentRecipe, fetchTopRecipe, fetchRecommendation]);
 
   return (
     <View>
@@ -40,6 +52,9 @@ const Index = ({}) => {
         scrollEventThrottle={16}
         stickyHeaderIndices={[1]}
         stickyHeaderHiddenOnScroll={true}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <View
           style={{

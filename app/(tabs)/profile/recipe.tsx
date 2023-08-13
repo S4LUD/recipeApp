@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 const RecipeItem = ({ item }: any) => {
   const { _id, title, categories, image } = item;
@@ -50,7 +50,7 @@ const RecipeItem = ({ item }: any) => {
 
 export default function Recipe() {
   const [refreshing, setRefreshing] = useState(false);
-  const { MyRecipe, fetchUserData } = useAuth();
+  const { MyRecipes, GetMyRecipes } = useAuth();
 
   const columns = 2;
 
@@ -58,17 +58,21 @@ export default function Recipe() {
     return <RecipeItem item={item} />;
   };
 
+  useEffect(() => {
+    GetMyRecipes();
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchUserData();
+    GetMyRecipes();
     setRefreshing(false);
-  }, [fetchUserData]);
+  }, [GetMyRecipes]);
 
   return (
     <View style={styles.RecipesContainer}>
-      {MyRecipe.length !== 0 ? (
+      {MyRecipes.length !== 0 ? (
         <FlatList
-          data={MyRecipe}
+          data={MyRecipes}
           keyExtractor={(item) => item._id}
           numColumns={columns}
           renderItem={renderRecipeItem}

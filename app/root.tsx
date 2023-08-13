@@ -81,6 +81,12 @@ export default function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="seached_view_recipe"
+        options={{
+          title: "",
+        }}
+      />
+      <Stack.Screen
         name="recent_view_recipe"
         options={{
           title: "",

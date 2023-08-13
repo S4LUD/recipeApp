@@ -16,9 +16,9 @@ import { useAuth } from "@/context/auth";
 const Viewer = () => {
   const params = useLocalSearchParams();
   const { _id } = params as any;
-  const { MyRecipe, triggerUpdateRecipeID } = useAuth();
+  const { MyRecipes, triggerUpdateRecipeID } = useAuth();
 
-  const recipe = MyRecipe.filter((item: any) => {
+  const recipe = MyRecipes.filter((item: any) => {
     return item._id === _id;
   });
 

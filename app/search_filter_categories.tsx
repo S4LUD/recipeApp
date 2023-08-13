@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,19 +7,98 @@ import {
   ScrollView,
   Pressable,
   useColorScheme,
+  Dimensions,
 } from "react-native";
-import { RecentFood } from "@/util/tempData";
-import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
 import { TextInput } from "react-native-paper";
 import Colors from "@/constants/Colors";
+import { useAuth } from "@/context/auth";
+
+const screenWidth = Dimensions.get("window").width;
+const cardWidth = (screenWidth - (2 - 1) * 45) / 2;
+
+interface CategoryButtonProps {
+  category: string;
+  selected: boolean;
+  onPress: (category: string) => void;
+}
+
+const CategoryButton = ({
+  category,
+  selected,
+  onPress,
+}: CategoryButtonProps) => (
+  <Pressable
+    style={[styles.categoryButton, selected && styles.selectedCategoryButton]}
+    onPress={() => onPress(category)}
+  >
+    <Text style={[selected && styles.selectedCategoryText]}>{category}</Text>
+  </Pressable>
+);
+
+const RecipeCard = ({ recipe }: any) => {
+  const { _id, title, categories, author, image } = recipe;
+
+  const goToRecipeDetails = () => {
+    router.push({
+      pathname: "/seached_view_recipe",
+      params: {
+        _id: _id,
+      },
+    });
+  };
+
+  return (
+    <Pressable
+      onPress={() => goToRecipeDetails()}
+      key={_id}
+      style={[styles.RecipeContainer, { width: cardWidth }]}
+    >
+      <View style={styles.TitleWrapper}>
+        <View style={styles.CategoriesContainer}>
+          {categories.map((cat: string, index: number) => {
+            return (
+              <View key={index} style={styles.Category}>
+                <Text style={styles.CategoryTitle}>{cat}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.Details}>
+          <View style={styles.DetailsContainer}>
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={2} style={styles.DetailsTitle}>
+                {title}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.AdditionalInfo}>
+            <Text
+              style={styles.AdditionalInfoTitle}
+            >{`By ${author.name}`}</Text>
+          </View>
+        </View>
+      </View>
+      <Image
+        style={[styles.RecipeImage, { width: cardWidth }]}
+        source={{ uri: image }}
+      />
+    </Pressable>
+  );
+};
 
 export default function FilterCat() {
-  const { filterBy } = useLocalSearchParams();
+  const { getAllRecipe, AllRecipe } = useAuth();
+  const { filterBy }: { filterBy: string } = useLocalSearchParams();
+  const selectedCategory = filterBy ? [filterBy] : [];
+
   const colorScheme = useColorScheme();
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    filterBy,
-  ]);
+  const [selectedCategories, setSelectedCategories] =
+    useState<string[]>(selectedCategory);
+  const [searchText, setSearchText] = useState<string>("");
+  const [searchDelayTimeout, setSearchDelayTimeout] =
+    useState<NodeJS.Timeout | null>(null); // State for the timeout
+
   const categories = [
     "Breakfast",
     "Brunch",
@@ -29,6 +108,27 @@ export default function FilterCat() {
     "Main",
     "Dessert",
   ];
+
+  useEffect(() => {
+    // Clear previous timeout whenever searchText or selectedCategories change
+    if (searchDelayTimeout) {
+      clearTimeout(searchDelayTimeout);
+    }
+
+    // Set a new timeout to trigger the search after a delay (e.g., 500ms)
+    const newTimeout = setTimeout(() => {
+      getAllRecipe(searchText, selectedCategories);
+    }, 500);
+
+    setSearchDelayTimeout(newTimeout); // Update the timeout state
+
+    // Clean up the timeout on component unmount
+    return () => {
+      if (searchDelayTimeout) {
+        clearTimeout(searchDelayTimeout);
+      }
+    };
+  }, [searchText, selectedCategories]);
 
   const handleCategoryPress = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -48,12 +148,12 @@ export default function FilterCat() {
   };
 
   // Convert 1-dimensional array to 2-dimensional array
-  const columns = 3;
-  const rows = Math.ceil(RecentFood.length / columns);
-  const matrix = [];
-  for (let i = 0; i < rows; i++) {
-    matrix[i] = RecentFood.slice(i * columns, i * columns + columns);
-  }
+  const columns = 2;
+  const matrix = Array.from(
+    { length: Math.ceil(AllRecipe.length / columns) },
+    (_, rowIndex) =>
+      AllRecipe.slice(rowIndex * columns, rowIndex * columns + columns)
+  );
 
   return (
     <View style={styles.Container}>
@@ -62,6 +162,8 @@ export default function FilterCat() {
           style={{
             backgroundColor: "#F0F2F5",
           }}
+          value={searchText}
+          onChangeText={(text) => setSearchText(text)}
           textColor="black"
           mode="outlined"
           outlineColor="transparent"
@@ -69,44 +171,21 @@ export default function FilterCat() {
           label="Search"
         />
         <View style={{ paddingTop: 15 }}>
-          <Text style={{}}>Filter by categories</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              flexWrap: "wrap",
-              paddingTop: 10,
-            }}
+          <Text>Filter by categories</Text>
+          <ScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 5, paddingTop: 10 }}
           >
             {categories.map((category) => (
-              <Pressable
+              <CategoryButton
                 key={category}
-                style={[
-                  {
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderRadius: 15,
-                  },
-                  selectedCategories.includes(category) && {
-                    backgroundColor: "tomato",
-                    borderColor: "tomato",
-                  },
-                ]}
-                onPress={() => handleCategoryPress(category)}
-              >
-                <Text
-                  style={[
-                    selectedCategories.includes(category) && {
-                      color: "#FFFFFF",
-                    },
-                  ]}
-                >
-                  {category}
-                </Text>
-              </Pressable>
+                category={category}
+                selected={selectedCategories.includes(category)}
+                onPress={handleCategoryPress}
+              />
             ))}
-          </View>
+          </ScrollView>
         </View>
       </View>
       <ScrollView
@@ -122,71 +201,16 @@ export default function FilterCat() {
       >
         {matrix.map((row, rowIndex) => (
           <View key={rowIndex} style={{ flexDirection: "row", gap: 15 }}>
-            {row.map((item) => {
-              const {
-                id,
-                title,
-                category,
-                author,
-                img,
-              }: {
-                id: number;
-                title: string;
-                category: string;
-                author: string;
-                img: string;
-              } = item;
-
-              return (
-                <Pressable
-                  onPress={() => {
-                    router.push({
-                      pathname: "/view_recipe",
-                      params: {
-                        id: id,
-                        title: title,
-                        category: category,
-                        author: author,
-                        img: img,
-                      },
-                    });
-                  }}
-                  key={id}
-                  style={styles.RecipeContainer}
-                >
-                  <View style={styles.TitleWrapper}>
-                    <View style={styles.Category}>
-                      <Text style={styles.CategoryTitle}>{category}</Text>
-                    </View>
-                    <View style={styles.Details}>
-                      <View style={styles.DetailsContainer}>
-                        <View style={{ width: 80 }}>
-                          <Text numberOfLines={2} style={styles.DetailsTitle}>
-                            {title}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.AdditionalInfo}>
-                        <Text style={styles.AdditionalInfoTitle}>
-                          {`By ${author}`}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Image
-                    style={styles.RecipeImage}
-                    source={{ uri: "https://" + img }}
-                  />
-                </Pressable>
-              );
-            })}
+            {row.map((item) => (
+              <RecipeCard key={item._id} recipe={item} />
+            ))}
             {/* Show empty space for last row if necessary */}
             {row.length < columns &&
               Array.from(Array(columns - row.length).keys()).map((i) => (
                 <View
                   key={i}
                   style={{
-                    width: 105,
+                    width: cardWidth,
                     height: 150,
                   }}
                 ></View>
@@ -199,6 +223,17 @@ export default function FilterCat() {
 }
 
 const styles = StyleSheet.create({
+  selectedCategoryText: { color: "#FFFFFF" },
+  selectedCategoryButton: {
+    backgroundColor: "tomato",
+    borderColor: "tomato",
+  },
+  categoryButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 15,
+  },
   Container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
@@ -208,8 +243,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   RecipeImage: {
-    width: 105,
-    height: 150,
+    height: 236,
     resizeMode: "cover",
     borderRadius: 10,
   },
@@ -222,6 +256,11 @@ const styles = StyleSheet.create({
     right: 0,
     margin: 10,
     justifyContent: "space-between",
+  },
+  CategoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
   },
   Category: {
     backgroundColor: "rgba(0, 0, 0, 0.60)",

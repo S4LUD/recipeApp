@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 const RecipeItem = ({ item }: any) => {
   const { _id, title, categories, image } = item;
@@ -49,7 +49,7 @@ const RecipeItem = ({ item }: any) => {
 };
 
 export default function Favorite() {
-  const { MyFavorites, fetchUserData } = useAuth();
+  const { MyFavorites, GetMyFavorites } = useAuth();
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const columns = 2;
@@ -58,11 +58,15 @@ export default function Favorite() {
     return <RecipeItem item={item} />;
   };
 
+  useEffect(() => {
+    GetMyFavorites();
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchUserData();
+    GetMyFavorites();
     setRefreshing(false);
-  }, [fetchUserData]);
+  }, [GetMyFavorites]);
 
   return (
     <View style={styles.RecipesContainer}>

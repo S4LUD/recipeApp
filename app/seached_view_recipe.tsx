@@ -16,10 +16,10 @@ import { useAuth } from "@/context/auth";
 
 const Viewer = () => {
   const params = useLocalSearchParams();
-  const { user, RecentRecipe, addToFavorites, deleteToFavorites } = useAuth();
+  const { user, AllRecipe, addToFavorites, deleteToFavorites } = useAuth();
   const { _id } = params as any;
 
-  const recipe = RecentRecipe.filter((item: any) => {
+  const recipe = AllRecipe.filter((item: any) => {
     return item._id === _id;
   });
 
@@ -42,10 +42,8 @@ const Viewer = () => {
       <Image style={styles.foodImage} source={{ uri: recipe[0]?.image }} />
       <View style={styles.content}>
         <Text style={styles.title}>{recipe[0]?.title}</Text>
-        {user?._id ===
-        recipe[0].userId ? undefined : user?.favorites_id.includes(
-            recipe[0]._id
-          ) ? (
+        {user?._id === recipe[0].userId ? undefined : user?.favorites_id[0]
+            ?._id === recipe[0]._id ? (
           <Pressable
             onPressIn={() => deleteToFavorites(recipe[0]._id)}
             style={{

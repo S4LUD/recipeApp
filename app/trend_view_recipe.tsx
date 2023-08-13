@@ -42,8 +42,10 @@ const Viewer = () => {
       <Image style={styles.foodImage} source={{ uri: recipe[0]?.image }} />
       <View style={styles.content}>
         <Text style={styles.title}>{recipe[0]?.title}</Text>
-        {user?._id === recipe[0].userId ? undefined : user?.favorites_id[0]
-            ?._id === recipe[0]._id ? (
+        {user?._id ===
+        recipe[0].userId ? undefined : user?.favorites_id.includes(
+            recipe[0]._id
+          ) ? (
           <Pressable
             onPressIn={() => deleteToFavorites(recipe[0]._id)}
             style={{
@@ -75,13 +77,20 @@ const Viewer = () => {
           </Pressable>
         )}
         <View style={styles.userContent}>
-          <LetterProfile
-            name={recipe[0]?.author.name}
-            size={50}
-            fontSize={16}
-            backgroundColor="#D4E2D4"
-            textColor="#000000"
-          />
+          {recipe[0].author.image ? (
+            <Image
+              source={{ uri: recipe[0].author.image }}
+              style={{ height: 50, width: 50, borderRadius: 50 }}
+            />
+          ) : (
+            <LetterProfile
+              name={recipe[0].author.name}
+              size={50}
+              fontSize={16}
+              backgroundColor="#D4E2D4"
+              textColor="#000000"
+            />
+          )}
           <View style={styles.userInfo}>
             <Text>{recipe[0]?.author.name}</Text>
             <Text>@{recipe[0]?.author.username}</Text>

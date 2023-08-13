@@ -106,13 +106,16 @@ interface AuthContextValue {
   RecommendFood: any[];
   addToFavorites: (_id: string) => void;
   deleteToFavorites: (_id: string) => void;
-  fetchUserData: () => void;
   fetchTopRecipe: () => void;
   TopRecipe: any[];
   fetchRecentRecipe: () => void;
   RecentRecipe: any[];
-  MyRecipe: any[];
+  getAllRecipe: (text: string, categories: string[]) => void;
+  AllRecipe: any[];
+  MyRecipes: any[];
   MyFavorites: any[];
+  GetMyRecipes: () => void;
+  GetMyFavorites: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -148,9 +151,82 @@ export function AuthProvider({
   const [RecommendFood, setRecommendFood] = useState<any[]>([]);
   const [TopRecipe, setTopRecipe] = useState<any[]>([]);
   const [RecentRecipe, setRecentRecipe] = useState<any[]>([]);
-  const [MyRecipe, setMyRecipe] = useState<any[]>([]);
+  const [AllRecipe, setAllRecipe] = useState<any[]>([]);
+  const [MyRecipes, setMyRecipes] = useState<any[]>([]);
   const [MyFavorites, setMyFavorites] = useState<any[]>([]);
   const pathname = usePathname();
+
+  async function GetMyRecipes() {
+    const storedToken = await SecureStore.getItemAsync("token");
+    if (storedToken) {
+      await axios
+        .request({
+          method: "get",
+          maxBodyLength: Infinity,
+          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/my/recipe`,
+          headers: {
+            authorization_r: `Bearer ${storedToken}`,
+          },
+        })
+        .then((response) => {
+          if (response.data.status) {
+            setMyRecipes(response.data.recipe_id);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }
+
+  async function GetMyFavorites() {
+    const storedToken = await SecureStore.getItemAsync("token");
+    if (storedToken) {
+      await axios
+        .request({
+          method: "get",
+          maxBodyLength: Infinity,
+          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/my/favorites`,
+          headers: {
+            authorization_r: `Bearer ${storedToken}`,
+          },
+        })
+        .then((response) => {
+          if (response.data.status) {
+            setMyFavorites(response.data.favorites_id);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }
+
+  async function getAllRecipe(searchText: string, categories: string[]) {
+    const storedToken = await SecureStore.getItemAsync("token");
+    if (storedToken) {
+      await axios
+        .request({
+          method: "post",
+          maxBodyLength: Infinity,
+          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/search/recipes`,
+          headers: {
+            authorization_r: `Bearer ${storedToken}`,
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            searchText: searchText,
+            categories: categories,
+          }),
+        })
+        .then((response) => {
+          setAllRecipe(response.data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }
 
   async function fetchRecentRecipe() {
     const storedToken = await SecureStore.getItemAsync("token");
@@ -242,38 +318,6 @@ export function AuthProvider({
     }
   }
 
-  async function fetchUserData() {
-    const storedToken = await SecureStore.getItemAsync("token");
-    if (storedToken) {
-      const userProfile = await getUserProfile(storedToken);
-
-      const {
-        _id,
-        username,
-        firstName,
-        lastName,
-        bio,
-        image,
-        image_public_id,
-        favorites_id,
-        recipe_id,
-      } = userProfile;
-
-      // Set user data
-      setMyRecipe(recipe_id);
-      setMyFavorites(favorites_id);
-      setAuth({
-        _id,
-        username,
-        firstName,
-        lastName,
-        bio,
-        image,
-        image_public_id,
-      });
-    }
-  }
-
   async function deleteToFavorites(_id: string) {
     const storedToken = await SecureStore.getItemAsync("token");
     if (storedToken) {
@@ -293,13 +337,12 @@ export function AuthProvider({
           })
           .then(async (response) => {
             if (response.data.status) {
-              if (pathname === "/profile/favorite") {
+              if (pathname === "/view_favorite_recipe") {
                 router.back();
               }
 
               // If verification succeeds, get the user profile
               const userProfile = await getUserProfile(storedToken);
-
               const {
                 _id,
                 username,
@@ -313,8 +356,6 @@ export function AuthProvider({
               } = userProfile;
 
               // Set user data
-              setMyRecipe(recipe_id);
-              setMyFavorites(favorites_id);
               setAuth({
                 _id,
                 username,
@@ -323,7 +364,11 @@ export function AuthProvider({
                 bio,
                 image,
                 image_public_id,
+                favorites_id,
+                recipe_id,
               });
+              GetMyRecipes();
+              GetMyFavorites();
             }
           })
           .catch((error) => {
@@ -373,8 +418,6 @@ export function AuthProvider({
               } = userProfile;
 
               // Set user data
-              setMyRecipe(recipe_id);
-              setMyFavorites(favorites_id);
               setAuth({
                 _id,
                 username,
@@ -383,7 +426,11 @@ export function AuthProvider({
                 bio,
                 image,
                 image_public_id,
+                favorites_id,
+                recipe_id,
               });
+              GetMyRecipes();
+              GetMyFavorites();
             }
           })
           .catch((error) => {
@@ -430,8 +477,6 @@ export function AuthProvider({
           } = userProfile;
 
           // Set user data
-          setMyRecipe(recipe_id);
-          setMyFavorites(favorites_id);
           setAuth({
             _id,
             username,
@@ -440,7 +485,11 @@ export function AuthProvider({
             bio,
             image,
             image_public_id,
+            favorites_id,
+            recipe_id,
           });
+          GetMyRecipes();
+          GetMyFavorites();
 
           // Once everything is done, set auth initialized to true
           setLoginStatus(false);
@@ -986,8 +1035,6 @@ export function AuthProvider({
         } = userProfile;
 
         // Set user data
-        setMyRecipe(recipe_id);
-        setMyFavorites(favorites_id);
         setAuth({
           _id,
           username,
@@ -996,7 +1043,11 @@ export function AuthProvider({
           bio,
           image,
           image_public_id,
+          favorites_id,
+          recipe_id,
         });
+        GetMyRecipes();
+        GetMyFavorites();
 
         setCreateRecipeStatus(false);
         router.back();
@@ -1051,8 +1102,6 @@ export function AuthProvider({
                       } = userProfile;
 
                       // Set user data
-                      setMyRecipe(recipe_id);
-                      setMyFavorites(favorites_id);
                       setAuth({
                         _id,
                         username,
@@ -1061,7 +1110,12 @@ export function AuthProvider({
                         bio,
                         image,
                         image_public_id,
+                        favorites_id,
+                        recipe_id,
                       });
+
+                      GetMyRecipes();
+                      GetMyFavorites();
 
                       router.back();
                     }
@@ -1112,13 +1166,16 @@ export function AuthProvider({
         RecommendFood,
         addToFavorites,
         deleteToFavorites,
-        fetchUserData,
         fetchTopRecipe,
         TopRecipe,
         fetchRecentRecipe,
         RecentRecipe,
-        MyRecipe,
+        getAllRecipe,
+        AllRecipe,
+        MyRecipes,
         MyFavorites,
+        GetMyRecipes,
+        GetMyFavorites,
       }}
     >
       {children}

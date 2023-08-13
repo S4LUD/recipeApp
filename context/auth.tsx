@@ -15,6 +15,11 @@ import {
 } from "@/components/DynamicMethodsInputs";
 import { IngredientsInputValue } from "@/components/DynamicIngredientsInputs";
 import { Alert } from "react-native";
+import Constants from "expo-constants";
+
+const EXPO_PUBLIC_API_URL = Constants?.expoConfig?.extra?.EXPO_PUBLIC_API_URL;
+
+console.log(EXPO_PUBLIC_API_URL);
 
 export interface User {
   _id: string | null;
@@ -163,7 +168,7 @@ export function AuthProvider({
         .request({
           method: "get",
           maxBodyLength: Infinity,
-          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/my/recipe`,
+          url: `${EXPO_PUBLIC_API_URL}/api/user/get/all/my/recipe`,
           headers: {
             authorization_r: `Bearer ${storedToken}`,
           },
@@ -186,7 +191,7 @@ export function AuthProvider({
         .request({
           method: "get",
           maxBodyLength: Infinity,
-          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/my/favorites`,
+          url: `${EXPO_PUBLIC_API_URL}/api/user/get/all/my/favorites`,
           headers: {
             authorization_r: `Bearer ${storedToken}`,
           },
@@ -209,7 +214,7 @@ export function AuthProvider({
         .request({
           method: "post",
           maxBodyLength: Infinity,
-          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/search/recipes`,
+          url: `${EXPO_PUBLIC_API_URL}/api/user/search/recipes`,
           headers: {
             authorization_r: `Bearer ${storedToken}`,
             "Content-Type": "application/json",
@@ -236,7 +241,7 @@ export function AuthProvider({
         .request({
           method: "get",
           maxBodyLength: Infinity,
-          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/recent/recipe`,
+          url: `${EXPO_PUBLIC_API_URL}/api/user/get/all/recent/recipe`,
           headers: {
             authorization_r: `Bearer ${storedToken}`,
           },
@@ -260,7 +265,7 @@ export function AuthProvider({
         .request({
           method: "get",
           maxBodyLength: Infinity,
-          url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/get/all/best/recipe`,
+          url: `${EXPO_PUBLIC_API_URL}/api/user/get/all/best/recipe`,
           headers: {
             authorization_r: `Bearer ${storedToken}`,
           },
@@ -282,7 +287,7 @@ export function AuthProvider({
 
       if (storedToken) {
         const response = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/api/user/recipes/recommendations`,
+          `${EXPO_PUBLIC_API_URL}/api/user/recipes/recommendations`,
           {
             headers: {
               authorization_r: `Bearer ${storedToken}`,
@@ -304,7 +309,7 @@ export function AuthProvider({
       const profileResponse = await axios.request({
         method: "get",
         maxBodyLength: Infinity,
-        url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/profile`,
+        url: `${EXPO_PUBLIC_API_URL}/api/user/profile`,
         headers: {
           authorization_r: `Bearer ${token}`,
         },
@@ -326,7 +331,7 @@ export function AuthProvider({
           .request({
             method: "patch",
             maxBodyLength: Infinity,
-            url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/remove/favorites`,
+            url: `${EXPO_PUBLIC_API_URL}/api/user/remove/favorites`,
             headers: {
               authorization_r: `Bearer ${storedToken}`,
               "Content-Type": "application/json",
@@ -391,7 +396,7 @@ export function AuthProvider({
           .request({
             method: "patch",
             maxBodyLength: Infinity,
-            url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/add/favorites`,
+            url: `${EXPO_PUBLIC_API_URL}/api/user/add/favorites`,
             headers: {
               authorization_r: `Bearer ${storedToken}`,
               "Content-Type": "application/json",
@@ -455,7 +460,7 @@ export function AuthProvider({
           await axios.request({
             method: "post",
             maxBodyLength: Infinity,
-            url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/verify`,
+            url: `${EXPO_PUBLIC_API_URL}/api/user/verify`,
             headers: {
               authorization_r: `Bearer ${storedToken}`,
             },
@@ -565,7 +570,7 @@ export function AuthProvider({
       setLoginStatus(true);
 
       const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/user/login`,
+        `${EXPO_PUBLIC_API_URL}/api/user/login`,
         {
           username: user,
           password: pass,
@@ -649,7 +654,7 @@ export function AuthProvider({
       const result: { data: SignUpResult } = await axios.request({
         method: "post",
         maxBodyLength: Infinity,
-        url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/register`,
+        url: `${EXPO_PUBLIC_API_URL}/api/user/register`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -700,7 +705,7 @@ export function AuthProvider({
       setUploadProfileLoading(true);
 
       const response = await axios.patch(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/user/update`,
+        `${EXPO_PUBLIC_API_URL}/api/user/update`,
         userUpdated,
         {
           headers: {
@@ -778,7 +783,7 @@ export function AuthProvider({
   async function deleteProfileImage(imagePublicId: string, token: string) {
     try {
       const result = await axios.delete(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/user/delete/profile/${imagePublicId}`,
+        `${EXPO_PUBLIC_API_URL}/api/user/delete/profile/${imagePublicId}`,
         {
           headers: {
             authorization_r: `Bearer ${token}`,
@@ -812,7 +817,7 @@ export function AuthProvider({
       } as any);
 
       const upload = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/user/upload/profile`,
+        `${EXPO_PUBLIC_API_URL}/api/user/upload/profile`,
         formData,
         {
           headers: {
@@ -917,7 +922,7 @@ export function AuthProvider({
       .request({
         method: "post",
         maxBodyLength: Infinity,
-        url: `${process.env.EXPO_PUBLIC_API_URL}/api/create/recipe`,
+        url: `${EXPO_PUBLIC_API_URL}/api/create/recipe`,
         headers: {
           "Content-Type": "application/json",
           authorization_r: `Bearer ${storedToken}`,
@@ -958,7 +963,7 @@ export function AuthProvider({
             const result = await axios.request({
               method: "post",
               maxBodyLength: Infinity,
-              url: `${process.env.EXPO_PUBLIC_API_URL}/api/upload/recipe/methods/image`,
+              url: `${EXPO_PUBLIC_API_URL}/api/upload/recipe/methods/image`,
               headers: {
                 authorization_r: `Bearer ${storedToken}`,
                 "Content-Type": "multipart/form-data",
@@ -1011,7 +1016,7 @@ export function AuthProvider({
       const result = await axios.request({
         method: "post",
         maxBodyLength: Infinity,
-        url: `${process.env.EXPO_PUBLIC_API_URL}/api/upload/recipe/image/${recipe_id}`,
+        url: `${EXPO_PUBLIC_API_URL}/api/upload/recipe/image/${recipe_id}`,
         headers: {
           authorization_r: `Bearer ${storedToken}`,
           "Content-Type": "multipart/form-data",
@@ -1076,7 +1081,7 @@ export function AuthProvider({
                   .request({
                     method: "delete",
                     maxBodyLength: Infinity,
-                    url: `${process.env.EXPO_PUBLIC_API_URL}/api/user/delete/recipe`,
+                    url: `${EXPO_PUBLIC_API_URL}/api/user/delete/recipe`,
                     headers: {
                       authorization_r: `Bearer ${storedToken}`,
                       "Content-Type": "application/json",

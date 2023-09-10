@@ -1,9 +1,9 @@
 module.exports = {
   expo: {
-    scheme: "thesisRecipeApp",
     name: "recipe",
     slug: "recipe",
-    version: "1.7.2",
+    scheme: "recipe",
+    version: "2.8.3",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     userInterfaceStyle: "automatic",
@@ -22,6 +22,20 @@ module.exports = {
         backgroundColor: "#ffffff",
       },
       package: "com.miruza.recipe",
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "https",
+              host: "*.recipe-be-ekcs.onrender.com",
+              pathPrefix: "/dashboard",
+            },
+          ],
+          category: ["BROWSABLE", "DEFAULT"],
+        },
+      ],
     },
     web: {
       bundler: "metro",

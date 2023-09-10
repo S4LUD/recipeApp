@@ -1,11 +1,11 @@
 module.exports = {
   expo: {
+    scheme: "thesisRecipeApp",
     name: "recipe",
     slug: "recipe",
     version: "1.7.2",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "myapp",
     userInterfaceStyle: "automatic",
     splash: {
       image: "./assets/images/splash.png",

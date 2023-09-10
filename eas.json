@@ -14,7 +14,28 @@
         "gradleCommand": ":app:assembleRelease"
       }
     },
-    "production": {}
+    "preview": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://recipe-be-ekcs.onrender.com"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "production": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://recipe-be-ekcs.onrender.com"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    }
   },
   "submit": {
     "production": {}

@@ -19,8 +19,6 @@ import Constants from "expo-constants";
 
 const EXPO_PUBLIC_API_URL = Constants?.expoConfig?.extra?.EXPO_PUBLIC_API_URL;
 
-console.log(EXPO_PUBLIC_API_URL);
-
 export interface User {
   _id: string | null;
   username: string | null;

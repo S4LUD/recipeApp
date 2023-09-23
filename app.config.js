@@ -22,20 +22,6 @@ module.exports = {
         backgroundColor: "#ffffff",
       },
       package: "com.miruza.recipe",
-      intentFilters: [
-        {
-          action: "VIEW",
-          autoVerify: true,
-          data: [
-            {
-              scheme: "https",
-              host: "*.recipe-be-ekcs.onrender.com",
-              pathPrefix: "/dashboard",
-            },
-          ],
-          category: ["BROWSABLE", "DEFAULT"],
-        },
-      ],
     },
     web: {
       bundler: "metro",

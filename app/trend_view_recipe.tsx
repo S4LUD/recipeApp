@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import {
   View,
   Image,
@@ -8,16 +8,29 @@ import {
   Animated,
   Platform,
   Pressable,
+  Share,
+  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import LetterProfile from "@/components/LetterProfile";
 import ShowMoreText from "@/components/ShowMoreText";
 import { useAuth } from "@/context/auth";
+import { TextInput } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+
+const EXPO_PUBLIC_API_URL = Constants?.expoConfig?.extra?.EXPO_PUBLIC_API_URL;
 
 const Viewer = () => {
   const params = useLocalSearchParams();
-  const { user, TopRecipe, addToFavorites, deleteToFavorites } = useAuth();
+  const { user, TopRecipe, addToFavorites, deleteToFavorites, fetchTopRecipe } =
+    useAuth();
   const { _id } = params as any;
+  const [cmmnts, setCmmnts] = useState<string>("");
+  const [loadingComments, setLoadingComments] = useState(false);
 
   const recipe = TopRecipe.filter((item: any) => {
     return item._id === _id;
@@ -33,11 +46,49 @@ const Viewer = () => {
     addToFavorites(_id);
   };
 
+  const HandleComment = async () => {
+    const storedToken = await SecureStore.getItemAsync("token");
+
+    if (storedToken) {
+      setLoadingComments(true);
+      await axios
+        .request({
+          method: "patch",
+          maxBodyLength: Infinity,
+          url: `${EXPO_PUBLIC_API_URL}/api/user/recipe/comment`,
+          headers: {
+            authorization_r: `Bearer ${storedToken}`,
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            comment: cmmnts,
+            recipe_id: _id,
+            user_id: user?._id,
+          }),
+        })
+        .then((response) => {
+          if (response.data) {
+            setCmmnts("");
+            fetchTopRecipe();
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setLoadingComments(false);
+        });
+    }
+  };
+
   return (
     <ScrollView
       style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       bounces={false}
+      contentContainerStyle={{
+        backgroundColor: "white",
+      }}
     >
       <Image style={styles.foodImage} source={{ uri: recipe[0]?.image }} />
       <View style={styles.content}>
@@ -77,9 +128,9 @@ const Viewer = () => {
           </Pressable>
         )}
         <View style={styles.userContent}>
-          {recipe[0].author.image ? (
+          {recipe[0].userId.image ? (
             <Image
-              source={{ uri: recipe[0].author.image }}
+              source={{ uri: recipe[0].userId.image }}
               style={{ height: 50, width: 50, borderRadius: 50 }}
             />
           ) : (
@@ -95,6 +146,25 @@ const Viewer = () => {
             <Text>{recipe[0]?.author.name}</Text>
             <Text>@{recipe[0]?.author.username}</Text>
           </View>
+        </View>
+        <View>
+          <Pressable
+            onPress={() =>
+              Share.share({
+                message: `http://192.168.1.72:5173/?_id=${_id}`,
+                url: `http://192.168.1.72:5173/?_id=${_id}`,
+              })
+            }
+            style={{
+              marginVertical: 15,
+              backgroundColor: "#3CA2FA",
+              paddingVertical: 5,
+              borderRadius: 10,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 16 }}>Share</Text>
+          </Pressable>
         </View>
         <View style={styles.detailsContent}>
           <ShowMoreText fontSize={16} text={recipe[0]?.info} maxLength={100} />
@@ -169,6 +239,69 @@ const Viewer = () => {
               </View>
             );
           })}
+        </View>
+        <View>
+          <View style={{ flexDirection: "row" }}>
+            <TextInput
+              style={{ flex: 1 }}
+              contentStyle={{
+                backgroundColor: "white",
+              }}
+              mode="flat"
+              placeholder="Write feedback here..."
+              value={cmmnts}
+              onChangeText={(text) => setCmmnts(text)}
+              textColor="black"
+              disabled={loadingComments}
+              multiline={true}
+            />
+            <TouchableOpacity
+              style={{
+                paddingHorizontal: 20,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onPress={() => HandleComment()}
+              disabled={loadingComments}
+            >
+              {loadingComments ? (
+                <ActivityIndicator size="large" color="#72D82D" />
+              ) : (
+                <Ionicons name="send" color="#3CA2FA" size={24} />
+              )}
+            </TouchableOpacity>
+          </View>
+          <View style={{ paddingHorizontal: 20, paddingVertical: 20, gap: 10 }}>
+            {recipe[0].comments_id.map((item: any, index: number) => {
+              return (
+                <View
+                  key={index}
+                  style={{
+                    backgroundColor: "#F2F2F2",
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 5,
+                    flexDirection: "row",
+                    gap: 15,
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    style={{ height: 40, width: 40, borderRadius: 100 }}
+                    source={{ uri: item.user_id.image }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <View>
+                      <Text
+                        style={{ fontWeight: "600" }}
+                      >{`${item.user_id.firstName} ${item.user_id.lastName}`}</Text>
+                    </View>
+                    <Text>{item.comment}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
         </View>
       </View>
     </ScrollView>

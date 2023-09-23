@@ -491,8 +491,9 @@ export function AuthProvider({
             favorites_id,
             recipe_id,
           });
-          GetMyRecipes();
-          GetMyFavorites();
+          await GetMyRecipes();
+          await GetMyFavorites();
+          await getAllRecipe("", []);
 
           // Once everything is done, set auth initialized to true
           setLoginStatus(false);

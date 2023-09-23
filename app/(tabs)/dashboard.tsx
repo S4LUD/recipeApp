@@ -7,9 +7,10 @@ import {
   Pressable,
   Animated,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useColorScheme } from "react-native";
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import TrendView from "@/components/TrendView";
 import RecommendView from "@/components/RecommendView";
 import RecentRecipe from "@/components/RecentRecipe";
@@ -18,8 +19,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/context/auth";
 import { useState, useCallback } from "react";
+import * as appLink from "expo-linking";
 
-const Index = ({}) => {
+const Index = () => {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const { user, fetchRecentRecipe, fetchTopRecipe, fetchRecommendation } =
@@ -35,6 +37,30 @@ const Index = ({}) => {
     fetchRecommendation();
     setRefreshing(false);
   }, [fetchRecentRecipe, fetchTopRecipe, fetchRecommendation]);
+
+  useEffect(() => {
+    const parseDeepLink = async () => {
+      const { hostname, path, queryParams, scheme } =
+        await appLink.parseInitialURLAsync();
+
+      if (scheme === "com.miruza.recipe") {
+        const { _id } = queryParams;
+
+        if (_id) {
+          router.push("/search_filter_categories");
+          setTimeout(() => {
+            router.push({
+              pathname: "/seached_view_recipe",
+              params: {
+                _id: _id,
+              },
+            });
+          }, 2500);
+        }
+      }
+    };
+    parseDeepLink();
+  }, []);
 
   return (
     <View>

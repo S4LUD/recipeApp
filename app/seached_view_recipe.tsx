@@ -149,8 +149,8 @@ const Viewer = () => {
           <Pressable
             onPress={() =>
               Share.share({
-                message: `http://192.168.1.72:5173/?_id=${_id}`,
-                url: `http://192.168.1.72:5173/?_id=${_id}`,
+                message: `https://recipe-app-36uf.onrender.com/?_id=${_id}`,
+                url: `https://recipe-app-36uf.onrender.com/?_id=${_id}`,
               })
             }
             style={{

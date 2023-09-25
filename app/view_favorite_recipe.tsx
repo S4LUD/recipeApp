@@ -76,6 +76,13 @@ const Viewer = () => {
     }
   };
 
+  const generateInitials = (name: string) => {
+    const nameWords = name.split(" ");
+    return nameWords
+      .map((word: string) => word.charAt(0).toUpperCase())
+      .join("");
+  };
+
   return (
     <ScrollView
       style={{ flex: 1 }}
@@ -261,10 +268,35 @@ const Viewer = () => {
                     alignItems: "center",
                   }}
                 >
-                  <Image
-                    style={{ height: 40, width: 40, borderRadius: 100 }}
-                    source={{ uri: item.user_id.image }}
-                  />
+                  {item.user_id.image ? (
+                    <Image
+                      style={{ height: 40, width: 40, borderRadius: 100 }}
+                      source={{ uri: item.user_id.image }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "#3CA2FA",
+                        height: 40,
+                        width: 40,
+                        borderRadius: 100,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#FFFFFF",
+                          fontSize: 18,
+                          fontWeight: "600",
+                        }}
+                      >
+                        {generateInitials(
+                          `${item.user_id.firstName} ${item.user_id.lastName}`
+                        )}
+                      </Text>
+                    </View>
+                  )}
                   <View style={{ flex: 1 }}>
                     <View>
                       <Text

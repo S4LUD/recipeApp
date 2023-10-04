@@ -1,6 +1,6 @@
 module.exports = {
   expo: {
-    name: "recipe",
+    name: "Cook Me",
     slug: "recipe",
     scheme: "recipe",
     version: "2.8.3",

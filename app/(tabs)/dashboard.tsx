@@ -108,7 +108,7 @@ const Index = () => {
               color={Colors[colorScheme ?? "light"].placeholder}
             />
             <Text style={{ color: Colors[colorScheme ?? "light"].placeholder }}>
-              Type ingridients
+              Type Ingredients
             </Text>
           </Pressable>
         </View>

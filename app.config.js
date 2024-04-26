@@ -37,8 +37,7 @@ module.exports = {
       router: {
         origin: false,
       },
-      // EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
-      EXPO_PUBLIC_API_URL: "https://recipe-be-ekcs.onrender.com",
+      EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
       eas: {
         projectId: "b439ded0-78c6-4aaa-a052-2ce422558b13",
       },

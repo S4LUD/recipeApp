@@ -1,8 +1,17 @@
 import React from "react";
 import { Stack, router } from "expo-router";
-import { Pressable, Text, View, useColorScheme, Keyboard } from "react-native";
+import {
+  Pressable,
+  Text,
+  View,
+  useColorScheme,
+  Keyboard,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/context/auth";
+import Logo from "../assets/images/icon.png";
 
 export default function RootLayoutNav() {
   const colorScheme = useColorScheme();
@@ -16,7 +25,23 @@ export default function RootLayoutNav() {
     DeleteRecipe,
   } = useAuth();
 
-  if (!authInitialized && !user) return;
+  if (!authInitialized && !user)
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+        }}
+      >
+        <Image source={Logo} style={{ height: 300, width: 300 }} />
+        <View style={{ position: "absolute", bottom: 50 }}>
+          <ActivityIndicator animating={true} size={35} />
+          <Text style={{ marginTop: 15 }}>Please Wait, Loading...</Text>
+        </View>
+      </View>
+    );
 
   return (
     <Stack

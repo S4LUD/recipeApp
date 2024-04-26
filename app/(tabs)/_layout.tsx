@@ -37,6 +37,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="formulate"
+        options={{
+          headerShown: true,
+          title: "Formulate Recipe",
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon name="bulb-sharp" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",

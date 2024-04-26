@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  StyleSheet,
   useColorScheme,
   Pressable,
   StatusBar,
@@ -24,12 +23,6 @@ export default function Signout() {
   const [confirmPassword, setConfirmPassowrd] = useState<string>("");
   const [isError, setError] = useState<string | null>(null);
   const [isSuccess, setSuccess] = useState<string | null>(null);
-  const containsLowercase = /[a-z]/.test(password);
-  const containsUppercase = /[A-Z]/.test(password);
-  const isAtLeast6Characters = password.length >= 6;
-  const containsLetter = /[a-zA-Z]/.test(password);
-  const containsDigit = /[0-9]/.test(password);
-  const containsSpecialChar = /[_\-.]/.test(password);
 
   useEffect(() => {
     navigation.addListener("beforeRemove", (e) => {
@@ -158,57 +151,6 @@ export default function Signout() {
                 label="Password"
                 secureTextEntry={true}
               />
-              <View style={{ marginTop: 5 }}>
-                <Text
-                  style={[
-                    styles.validationText,
-                    isAtLeast6Characters ? {} : styles.invalid,
-                  ]}
-                >
-                  At least 6 characters in length.
-                </Text>
-                <Text
-                  style={[
-                    styles.validationText,
-                    containsLowercase ? {} : styles.invalid,
-                  ]}
-                >
-                  Contains at least one lowercase.
-                </Text>
-                <Text
-                  style={[
-                    styles.validationText,
-                    containsUppercase ? {} : styles.invalid,
-                  ]}
-                >
-                  Contains at least one uppercase.
-                </Text>
-                <Text
-                  style={[
-                    styles.validationText,
-                    containsLetter ? {} : styles.invalid,
-                  ]}
-                >
-                  Contains at least one letter.
-                </Text>
-                <Text
-                  style={[
-                    styles.validationText,
-                    containsDigit ? {} : styles.invalid,
-                  ]}
-                >
-                  Contains at least one digit.
-                </Text>
-                <Text
-                  style={[
-                    styles.validationText,
-                    containsSpecialChar ? {} : styles.invalid,
-                  ]}
-                >
-                  Contains at least one of underscore (_), period (.), or hyphen
-                  (-).
-                </Text>
-              </View>
             </View>
             <TextInput
               style={{
@@ -275,20 +217,3 @@ export default function Signout() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  validationText: {
-    color: "green",
-    fontSize: 12,
-  },
-  invalid: {
-    color: "red",
-  },
-});
